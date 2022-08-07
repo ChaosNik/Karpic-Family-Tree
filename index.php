@@ -1,2 +1,4 @@
-<?php include_once(“home.html”); ?>
-<?php header('Location: https://porodicno-stablo-karpic.herokuapp.com/home.html'); ?>
+<?php
+	include_once(“home.html”);
+	header('Location: https://porodicno-stablo-karpic.herokuapp.com/home.html');
+?>
