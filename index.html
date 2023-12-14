@@ -1,8 +1,161 @@
 <!DOCTYPE html>
-<html>
-    <head>
-    </head>
-    <body>
-	<img src="./Porodicno-stablo.png" align="middle" width="1000" height="1000">
-    </body>
+<!--Not my original work. I don't know who the author is-->
+<head>
+	<title>Mjerenje vremena</title>
+	<style>
+	body {
+		/*background-image: url('https://i1.sndcdn.com/artworks-Hn9LGqp8fcyX-0-t500x500.jpg');*/
+		background-size: cover;
+		background-repeat: no-repeat;
+		padding-top: 55px;
+		margin-left: 5px;
+	}
+	#main {
+		margin: auto;
+		min-height: 500px;
+	}
+	#prvi {
+		margin: auto;
+		margin-bottom: 10px;
+	}
+	#unos {
+		width: 365px;
+		height: 200px;
+		resize: none;
+		border-radius: 10px;
+		padding: 10px;
+		margin: auto;
+		/*opacity: 0.9;*/
+		font-size: 115%;
+	}
+	h1 {
+		margin-bottom: 0;
+	}
+	p {
+		margin: 5px;
+		font-size: 150%;
+		font-weight: bold;
+	}
+	#ispis, #radno_vrijeme, #preostalo_vrijeme {
+		/*padding: 5px;*/
+		display: inline;
+		font-weight: bold;
+		font-size: 300%;
+	}
+	</style>
+	<script>
+		var tajmer;
+		function mjerenoVrijeme(vrijeme, zadnjiUnos) {
+			var razlika = new Date()/1000 - new Date(zadnjiUnos)/1000;
+			razlika += vrijeme/1000;
+			//razlika /= 1000;
+			let h = parseInt(razlika / 3600);
+			let m = parseInt(razlika % 3600 / 60);
+			let s = parseInt(razlika % 36000 % 60);
+			let tekst = ((h < 10)?'0':'') + h + ":" + 
+			((m < 10)?'0':'') + m + ":" +
+			((s < 10)?'0':'') + s;
+			var tekst2;
+			var razlika2 = (7 * 3600 + 30 * 60) - razlika;
+			if (razlika2 > 0) {
+				let h2 = parseInt(razlika2 / 3600);
+				let m2 = parseInt(razlika2 % 3600 / 60);
+				let s2 = parseInt(razlika2 % 36000 % 60);
+				tekst2 = ((h2 < 10)?'0':'') + h2 + ":" + 
+				((m2 < 10)?'0':'') + m2 + ":" +
+				((s2 < 10)?'0':'') + s2;
+				document.getElementById("hid").style.visibility = "visible"; 
+			}
+			else {
+				razlika2 = 0;
+				document.getElementById("hid").style.visibility = "hidden"; 
+			}
+			document.getElementById("radno_vrijeme").innerHTML = tekst;
+			document.getElementById("preostalo_vrijeme").innerHTML = tekst2;
+		}
+		
+		function myFunction() {
+			clearInterval(tajmer);
+			document.getElementById("ispis").innerHTML = '';
+			document.getElementById("radno_vrijeme").innerHTML = '';
+			var tekst = document.getElementById("unos").value;
+			var niz = tekst.split('\n');
+			var nizEntry = [];
+			var nizExit = [];
+			var rezultat;
+			for (let i = 0; i < niz.length; i++) {
+				var linija = niz[i];
+				if (linija) {
+					try {
+					//TODO: ako je exit prvi unos
+						var tip = linija.split('\t')[0];
+						var validan = linija.split('\t')[4];
+						if (validan.trim() == 'OK') {
+							if (tip.trim() == 'Entry') {
+								nizEntry.push(linija);
+							}
+							if (tip.trim() == 'Exit') {
+								nizExit.push(linija);
+							}
+						}
+					} catch (err) {
+						console.log("greska1");
+						return;
+					}
+				}
+			}
+			if (nizEntry.length <= nizExit.length) {
+				//document.getElementById("ispis").innerHTML = 'NEISPRAVAN UNOS';
+				return;
+			}
+			var odradjeno = 0;
+			for (let i = 0; i < nizExit.length; i++) {
+				let datum1 = new Date(nizEntry[i].split('\t')[2].trim());
+				let datum2 = new Date(nizExit[i].split('\t')[2].trim());
+				odradjeno +=  datum2 - datum1;
+			}
+			var pom;
+			try {
+				pom = nizEntry[nizEntry.length-1].split('\t')[2].trim();
+				var vrijeme = new Date(pom);
+				vrijeme.setHours(vrijeme.getHours() + 7);
+				vrijeme.setMinutes(vrijeme.getMinutes() + 30);
+				vrijeme.setMilliseconds(vrijeme.getMilliseconds() - odradjeno);
+			} catch(err) {
+				console.log("greska2");
+			}
+			let sati = vrijeme.getHours();
+			let minute = vrijeme.getMinutes();
+			let sekunde = vrijeme.getSeconds();
+			rezultat = ((sati < 10)?'0':'') + sati + ":" + 
+			((minute < 10)?'0':'') + minute + ":" +
+			((sekunde < 10)?'0':'') + sekunde;
+			
+			document.getElementById("ispis").innerHTML = rezultat;
+			
+			tajmer = setInterval(mjerenoVrijeme, 1000, odradjeno, pom);
+		}
+	</script>
+</head>
+<body>
+	<div id="main">
+		<div id="prvi">
+		<h1>Unos vremena</h1>
+		<textarea id="unos" oninput="myFunction()" wrap="soft"></textarea>
+		</div>
+		<div>
+			<p>Kraj radnog vremena u:</p>
+			<p id="ispis"></p>
+		</div>
+		<div>
+			<p>Provedeno vrijeme na poslu:</p>
+			<p id="radno_vrijeme"></p>
+		</div>
+		<div id="hid">
+			<p>Preostalo vrijeme:</p>
+			<p id="preostalo_vrijeme"></p>
+		</div>
+		
+	</div>
+</body>
 </html>
