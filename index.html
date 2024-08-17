@@ -22,55 +22,54 @@
             cursor: grab;
         }
 
-		#tree {
-			position: absolute;
-			left: -2000px;  /* Move 4444 pixels to the left */
-			top: 555px;     /* Move 555 pixels down */
-			transform-origin: top right;
-			transform: scale(1);
-			width: 100%;
-			height: 100%;
-			overflow: visible;
-		}
-		
-		#toggleIdButton {
-			position: absolute;
-			top: 0;
-			left: 0;
-			padding: 20px 40px; /* Increased padding */
-			font-size: 32px; /* Increased font size */
-			background-color: #007bff;
-			color: white;
-			border: none;
-			border-radius: 5px;
-			cursor: pointer;
-			z-index: 1000; /* Ensures it's on top of other elements */
-		}
-		
-		.node {
-			position: absolute;
-			transform-origin: center;
-			text-align: center;
-			width: 150px;
-			height: 15px;
-			border: none;
-			padding: 2px 2px;
-			text-decoration: none;
-			letter-spacing: 2px;
-			color: black;
-			font-family: arial, verdana, tahoma;
-			font-size: 15px;
-			font-weight: bold;
-			display: flex;  /* Use flexbox */
-			justify-content: center;  /* Center horizontally */
-			align-items: center;  /* Center vertically */
-			border-radius: 1px;
-			background-color: white;
-			cursor: pointer;
-			transform: rotate(0deg);
-			user-select: none;  /* Prevent text selection */
-			-moz-user-select: none; /* Firefox */
-		}
+        #tree {
+            position: absolute;
+			left: -1639px; top: 362px;
+            transform-origin: top left;
+            transform: scale(0.7);
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        #toggleIdButton {
+            position: absolute;
+            top: 20px; /* Position at the bottom */
+            left: 100px; /* Position at the bottom */
+            padding: 40px 80px; /* Increased padding for a larger button */
+            font-size: 48px; /* Larger font size */
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        .node {
+            position: absolute;
+            transform-origin: center;
+            text-align: center;
+            width: 150px;
+            height: 15px;
+            border: none;
+            padding: 2px 2px;
+            text-decoration: none;
+            letter-spacing: 2px;
+            color: black;
+            font-family: arial, verdana, tahoma;
+            font-size: 15px;
+            font-weight: bold;
+            display: flex;  /* Use flexbox */
+            justify-content: center;  /* Center horizontally */
+            align-items: center;  /* Center vertically */
+            border-radius: 1px;
+            background-color: white;
+            cursor: pointer;
+            transform: rotate(0deg);
+            user-select: none;  /* Prevent text selection */
+            -moz-user-select: none; /* Firefox */
+        }
 
         .node.root {
             width: 150px;
@@ -92,25 +91,50 @@
             width: 100%;
             height: 100%;
             z-index: 0;
-			overflow: visible;
+            overflow: visible;
+        }
+
+        /* Media query for smaller screens, like phones */
+        @media (max-width: 600px) {
+			#wrapper {
+				position: absolute;
+				width: 200%;
+				height: 200%;
+				overflow: visible;
+				cursor: grab;
+			}
+            #tree {
+                position: absolute;
+                left: -10%;
+                top: 40%;
+				transform: scale(0.375);
+                width: 150%;
+                height: 150%;
+            }
+            #toggleIdButton {
+				position: absolute;
+                width: 60%;
+                height: 25%;
+				min-height: 100px; 
+                padding: 5px 5px 5px 5px;
+                font-size: 32px;
+            }
         }
     </style>
 </head>
 <body>
-	<button id="toggleIdButton">IME/ID</button>
+    <button id="toggleIdButton">IME / ID</button>
     <div id="wrapper">
         <div id="tree"></div>
     </div>
 
     <script>
-        // Function to fetch and parse CSV data from a URL
         async function fetchCsvData(url) {
             const response = await fetch(url);
             const csvText = await response.text();
             return csvToArray(csvText);
         }
 
-        // Modified function to parse CSV and ignore the first row
         function csvToArray(csv) {
             const lines = csv.trim().split("\n");
             lines.shift(); // Remove the first row (header)
@@ -121,58 +145,51 @@
         }
 
         function buildTree(data) {
-			let tree = {};
-			
-			// Initialize tree nodes
-			data.forEach(item => {
-				tree[item.id] = { ...item, children: [] };
-			});
+            let tree = {};
+            data.forEach(item => {
+                tree[item.id] = { ...item, children: [] };
+            });
 
-			// Build tree and reorder children while generating the lists
-			Object.values(tree).forEach(item => {
-				if (item.parentId) {
-					tree[item.parentId].children.push(item);
-				}
-			});
+            Object.values(tree).forEach(item => {
+                if (item.parentId) {
+                    tree[item.parentId].children.push(item);
+                }
+            });
 
-			// Calculate weights and reorder children
-			Object.values(tree).forEach(node => {
-				if (node.children.length > 0) {
-					// Calculate weights for all children
-					node.children.forEach(child => {
-						child.weight = calculateWeight(tree, child);
-					});
+            Object.values(tree).forEach(node => {
+                if (node.children.length > 0) {
+                    node.children.forEach(child => {
+                        child.weight = calculateWeight(tree, child);
+                    });
 
-					// Sort children by weight (ascending)
-					node.children.sort((a, b) => a.weight - b.weight);
+                    node.children.sort((a, b) => a.weight - b.weight);
 
-					// Split sorted children into two halves
-					const halfLength = Math.ceil(node.children.length / 2);
-					const firstHalf = node.children.slice(0, halfLength); // Lower weights
-					const secondHalf = node.children.slice(halfLength);  // Higher weights
+                    const halfLength = Math.ceil(node.children.length / 2);
+                    const firstHalf = node.children.slice(0, halfLength); 
+                    const secondHalf = node.children.slice(halfLength);  
 
-					// Reorder by alternatively taking items from the two lists
-					let reorderedChildren = [];
-					let i = 0, j = 0;
-					while (i < firstHalf.length || j < secondHalf.length) {
-						if (j < secondHalf.length) {
-							reorderedChildren.push(secondHalf[j++]);
-						}
-						if (i < firstHalf.length) {
-							reorderedChildren.push(firstHalf[i++]);
-						}
-					}
+                    let reorderedChildren = [];
+                    let i = 0, j = 0;
+                    while (i < firstHalf.length || j < secondHalf.length) {
+                        if (j < secondHalf.length) {
+                            reorderedChildren.push(secondHalf[j++]);
+                        }
+                        if (i < firstHalf.length) {
+                            reorderedChildren.push(firstHalf[i++]);
+                        }
+                    }
 
-					node.children = reorderedChildren;
-				}
-			});
+                    node.children = reorderedChildren;
+                }
+            });
 
-			return tree;
-		}	
-		function calculateWeight(tree, node) {
-			if (!node.children || node.children.length === 0) return 1;
-			return node.children.reduce((sum, child) => sum + calculateWeight(tree, child), 0);
-		}
+            return tree;
+        }
+
+        function calculateWeight(tree, node) {
+            if (!node.children || node.children.length === 0) return 1;
+            return node.children.reduce((sum, child) => sum + calculateWeight(tree, child), 0);
+        }
 
         function calculateWeights(tree) {
             function getWeight(node) {
@@ -186,31 +203,23 @@
         }
 
         function getProportionalAngle(tree, node, startAngle = 0, totalAngle = Math.PI * 2, minSpacing = 0.05) {
-			if (!node.children || node.children.length === 0) {
-				return startAngle + totalAngle / 2; // Leaf node, return the centered angle
-			}
+            if (!node.children || node.children.length === 0) {
+                return startAngle + totalAngle / 2;
+            }
 
-			// Calculate the total weight of all children
-			const totalWeight = node.children.reduce((sum, n) => sum + n.weight, 0);
-			
-			// Calculate the total available angle by subtracting the minimal spacing
-			const adjustedTotalAngle = totalAngle - (node.children.length - 1) * minSpacing;
-			let currentAngle = startAngle;
+            const totalWeight = node.children.reduce((sum, n) => sum + n.weight, 0);
+            const adjustedTotalAngle = totalAngle - (node.children.length - 1) * minSpacing;
+            let currentAngle = startAngle;
 
-			for (let child of node.children) {
-				// Calculate the angular span for each child based on the adjusted total angle
-				const childAngleSpan = (child.weight / totalWeight) * adjustedTotalAngle;
+            for (let child of node.children) {
+                const childAngleSpan = (child.weight / totalWeight) * adjustedTotalAngle;
+                child.angle = getProportionalAngle(tree, child, currentAngle, childAngleSpan, minSpacing);
+                currentAngle += childAngleSpan + minSpacing;
+            }
 
-				// Recursively set the angle for the child node
-				child.angle = getProportionalAngle(tree, child, currentAngle, childAngleSpan, minSpacing);
-
-				// Move the current angle forward by the span plus the minimal spacing
-				currentAngle += childAngleSpan + minSpacing;
-			}
-
-			node.angle = (startAngle + currentAngle - minSpacing) / 2; // Set and return the centered angle for the parent
-			return node.angle;
-		}
+            node.angle = (startAngle + currentAngle - minSpacing) / 2;
+            return node.angle;
+        }
 
         function renderTree(tree) {
             const container = document.getElementById('tree');
@@ -234,7 +243,7 @@
 
                 const nodeDiv = document.createElement('div');
                 nodeDiv.className = `node ${node.id === '1' ? 'root' : ''}`;
-				nodeDiv.setAttribute('data-id', node.id);
+                nodeDiv.setAttribute('data-id', node.id);
 
                 if (node.id === '1') {
                     nodeDiv.style.left = `${centerX - 75}px`;
@@ -245,7 +254,6 @@
                 }
 
                 nodeDiv.innerText = node.name;
-                nodeDiv.dataset.id = node.id;
 
                 if (node.gender === 'M') {
                     nodeDiv.style.backgroundColor = 'lightblue';
@@ -258,7 +266,6 @@
                     const parentX = centerX + (getDepth(tree, parentNode.id) / maxDepth) * maxRadius * Math.cos(parentNode.angle);
                     const parentY = centerY + (getDepth(tree, parentNode.id) / maxDepth) * maxRadius * Math.sin(parentNode.angle);
 
-                    // Calculate connection points for lines from the sides of the rectangles
                     const start = calculateConnectionPoint(nodeDiv, x, y, parentX, parentY);
                     const end = calculateConnectionPoint(parentNode, parentX, parentY, x, y);
 
@@ -282,7 +289,6 @@
             updateAllRotations(tree);
         }
 
-        // Function to calculate the connection points on the sides of the rectangles
         function calculateConnectionPoint(node, x, y, parentX, parentY) {
             const width = node.offsetWidth;
             const height = node.offsetHeight;
@@ -290,23 +296,20 @@
             let startX = x;
             let startY = y;
 
-            // Determine which side of the rectangle the line should connect to
             const deltaX = parentX - x;
             const deltaY = parentY - y;
 
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                // Horizontal connection (left or right)
                 if (deltaX < 0) {
-                    startX = x - width / 2; // Left side
+                    startX = x - width / 2;
                 } else {
-                    startX = x + width / 2; // Right side
+                    startX = x + width / 2;
                 }
             } else {
-                // Vertical connection (top or bottom)
                 if (deltaY < 0) {
-                    startY = y - height / 2; // Top side
+                    startY = y - height / 2;
                 } else {
-                    startY = y + height / 2; // Bottom side
+                    startY = y + height / 2;
                 }
             }
 
@@ -392,11 +395,9 @@
                 }
             });
         }
-		
-		// Set the initial zoom
-		document.body.style.zoom="45%";
-		
-        // Fetch the CSV data from the URL and build the tree
+
+        document.body.style.zoom="45%";
+
         fetchCsvData('https://raw.githubusercontent.com/ChaosNik/Karpic-Family-Tree/main/FamilyTree.csv')
             .then(treeData => {
                 const treeStructure = buildTree(treeData);
@@ -408,163 +409,141 @@
             });
 
         const wrapper = document.getElementById('wrapper');
-		const tree = document.getElementById('tree');
-		let isPanning = false;
-		let startX = 0;
-		let startY = 0;
-		let scale = 1;
-		let offsetX = 0;
-		let offsetY = 0;
-		let firstScroll = true;
-		let lastTouchEnd = 0;
-		let initialPinchDistance = null;
-		let initialPinchScale = 2;
+        const tree = document.getElementById('tree');
+        let isPanning = false;
+        let startX = 0;
+        let startY = 0;
+        let scale = 1;
+        let offsetX = 0;
+        let offsetY = 0;
+        let firstScroll = true;
+        let lastTouchEnd = 0;
+        let initialPinchDistance = null;
+        let initialPinchScale = 2;
 
-		wrapper.addEventListener('mousedown', (e) => {
-			e.preventDefault();
-			isPanning = true;
-			startX = e.clientX - tree.offsetLeft;
-			startY = e.clientY - tree.offsetTop;
-			wrapper.style.cursor = 'grabbing';
-		});
+        wrapper.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            isPanning = true;
+            startX = e.clientX - tree.offsetLeft;
+            startY = e.clientY - tree.offsetTop;
+            wrapper.style.cursor = 'grabbing';
+        });
 
-		wrapper.addEventListener('mousemove', (e) => {
-			if (!isPanning) return;
-			e.preventDefault();
-			const x = e.clientX - startX;
-			const y = e.clientY - startY;
-			offsetX = x;
-			offsetY = y;
-			tree.style.left = `${x}px`;
-			tree.style.top = `${y}px`;
-		});
+        wrapper.addEventListener('mousemove', (e) => {
+            if (!isPanning) return;
+            e.preventDefault();
+            const x = e.clientX - startX;
+            const y = e.clientY - startY;
+            offsetX = x;
+            offsetY = y;
+            tree.style.left = `${x}px`;
+            tree.style.top = `${y}px`;
+        });
 
-		wrapper.addEventListener('mouseup', (e) => {
-			e.preventDefault();
-			isPanning = false;
-			wrapper.style.cursor = 'grab';
-		});
+        wrapper.addEventListener('mouseup', (e) => {
+            e.preventDefault();
+            isPanning = false;
+            wrapper.style.cursor = 'grab';
+        });
 
-		wrapper.addEventListener('mouseleave', (e) => {
+        wrapper.addEventListener('mouseleave', (e) => {
+            e.preventDefault();
+            isPanning = false;
+            wrapper.style.cursor = 'grab';
+        });
+
+        wrapper.addEventListener('wheel', (e) => {
 			e.preventDefault();
-			isPanning = false;
-			wrapper.style.cursor = 'grab';
-		});
-		
-		wrapper.addEventListener('wheel', (e) => {
-			e.preventDefault();
-			if(firstScroll){
-				startX = e.clientX - tree.offsetLeft;
-				startY = e.clientY - tree.offsetTop;
-				
-				const x = e.clientX - startX;
-				const y = e.clientY - startY;
-				offsetX = x;
-				offsetY = y;
-				tree.style.left = `${x}px`;
-				tree.style.top = `${y}px`;
-				
-				wrapper.style.cursor = 'grab';
-				
-				firstScroll = false;
-			}
+
 			const prevScale = scale;
 			scale += e.deltaY * -0.001;
 			scale = Math.min(Math.max(0.2, scale), 2);
-
-			// Calculate the position of the mouse relative to the tree
-			const mouseX = e.clientX - wrapper.offsetLeft;
-			const mouseY = e.clientY - wrapper.offsetTop;
-
-			// Calculate the new offset to keep the mouse position consistent
+			
+			const mouseX = e.clientX;// - wrapper.offsetLeft;
+			const mouseY = e.clientY;// - wrapper.offsetTop;
+			
+			if (firstScroll) {
+				offsetX = wrapper.offsetLeft - 2800;
+				offsetY = wrapper.offsetTop;
+				firstScroll = false;
+			}
 			offsetX = mouseX - (mouseX - offsetX) * (scale / prevScale);
 			offsetY = mouseY - (mouseY - offsetY) * (scale / prevScale);
 
-			tree.style.transformOrigin = `${mouseX}px ${mouseY}px`;
+			tree.style.transformOrigin = `${10}px ${10}px`;
 			tree.style.transform = `scale(${scale})`;
 			tree.style.left = `${offsetX}px`;
 			tree.style.top = `${offsetY}px`;
-			
-			updateAllLines(); // Update line positions on zoom
-		});
-		
-		// Handle touch events for pinch zooming, touch panning, and double-tap zooming
-		wrapper.addEventListener('touchstart', (e) => {
-			if (e.touches.length === 2) {
-				// Pinch start
-				initialPinchDistance = Math.hypot(
-					e.touches[0].clientX - e.touches[1].clientX,
-					e.touches[0].clientY - e.touches[1].clientY
-				);
-				initialPinchScale = scale;
-			} else if (e.touches.length === 1) {
-				// Pan start
-				isPanning = true;
-				startX = e.touches[0].clientX - tree.offsetLeft;
-				startY = e.touches[0].clientY - tree.offsetTop;
-			}
+
+			updateAllLines();
 		});
 
-		wrapper.addEventListener('touchmove', (e) => {
-			e.preventDefault();
-			if (e.touches.length === 2 && initialPinchDistance) {
-				// Pinch move
-				const pinchDistance = Math.hypot(
-					e.touches[0].clientX - e.touches[1].clientX,
-					e.touches[0].clientY - e.touches[1].clientY
-				);
-				scale = Math.min(Math.max(0.6, initialPinchScale * (pinchDistance / initialPinchDistance)), 2);
-				tree.style.transform = `scale(${scale})`;
-				updateAllLines(); // Update line positions on zoom
-			} else if (e.touches.length === 1 && isPanning) {
-				// Pan move
-				const x = e.touches[0].clientX - startX;
-				const y = e.touches[0].clientY - startY;
-				offsetX = x;
-				offsetY = y;
-				tree.style.left = `${x}px`;
-				tree.style.top = `${y}px`;
-			}
-		});
+        wrapper.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                initialPinchDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                initialPinchScale = scale;
+            } else if (e.touches.length === 1) {
+                isPanning = true;
+                startX = e.touches[0].clientX - tree.offsetLeft;
+                startY = e.touches[0].clientY - tree.offsetTop;
+            }
+        });
 
-		wrapper.addEventListener('touchend', (e) => {
-			if (e.touches.length === 0) {
-				// Reset panning and pinch distance
-				isPanning = false;
-				initialPinchDistance = null;
-			}
-			
-			// Detect double-tap for zoom in/out
-			const now = new Date().getTime();
-			if (now - lastTouchEnd <= 300) {
-				scale = scale === 0.8 ? 2 : 0.8; // Toggle between 0.8x and 2x zoom
-				tree.style.transform = `scale(${scale})`;
-				updateAllLines(); // Update line positions on zoom
-			}
-			lastTouchEnd = now;
-		});
-		
-		document.getElementById('toggleIdButton').addEventListener('click', () => {
-			const nodes = document.querySelectorAll('.node');
-			nodes.forEach(node => {
-				const id = node.getAttribute('data-id');
-				const currentName = node.innerText;
+        wrapper.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 2 && initialPinchDistance) {
+                const pinchDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                scale = Math.min(Math.max(0.6, initialPinchScale * (pinchDistance / initialPinchDistance)), 2);
+                tree.style.transform = `scale(${scale})`;
+                updateAllLines(); 
+            } else if (e.touches.length === 1 && isPanning) {
+                const x = e.touches[0].clientX - startX;
+                const y = e.touches[0].clientY - startY;
+                offsetX = x;
+                offsetY = y;
+                tree.style.left = `${x}px`;
+                tree.style.top = `${y}px`;
+            }
+        });
 
-				if (!node.dataset.originalName) {
-					// Store the original name if it's not already stored
-					node.dataset.originalName = currentName;
-				}
+        wrapper.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0) {
+                isPanning = false;
+                initialPinchDistance = null;
+            }
 
-				if (currentName.startsWith(id)) {
-					// If the name starts with the ID, remove the ID prefix
-					node.innerText = node.dataset.originalName;
-				} else {
-					// Otherwise, add the ID prefix
-					node.innerText = `${id}`;
-				}
-			});
-		});
+            const now = new Date().getTime();
+            if (now - lastTouchEnd <= 300) {
+                scale = scale === 0.8 ? 2 : 0.8;
+                tree.style.transform = `scale(${scale})`;
+                updateAllLines(); 
+            }
+            lastTouchEnd = now;
+        });
 
+        document.getElementById('toggleIdButton').addEventListener('click', () => {
+            const nodes = document.querySelectorAll('.node');
+            nodes.forEach(node => {
+                const id = node.getAttribute('data-id');
+                const currentName = node.innerText;
+
+                if (!node.dataset.originalName) {
+                    node.dataset.originalName = currentName;
+                }
+
+                if (currentName.startsWith(id)) {
+                    node.innerText = node.dataset.originalName;
+                } else {
+                    node.innerText = `${id}`;
+                }
+            });
+        });
     </script>
 </body>
 </html>
