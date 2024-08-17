@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family tree Karpić</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            position: relative;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #tree {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .node {
+            position: absolute;
+            transform-origin: center;
+            text-align: center;
+            width: 100px;
+            height: 7px;
+            border: none;
+            padding: 2px 2px;
+            text-decoration: none;
+            color: black;
+            font-family: arial, verdana, tahoma;
+            font-size: 7px; /* Increased font size */
+            font-weight: bold; /* Make the text bold */
+            display: inline-block;
+            border-radius: 1px;
+            background-color: white;
+            cursor: pointer;
+            transform: rotate(0deg); /* Initial rotation */
+            user-select: none; /* Prevent text selection */
+        }
+
+        .node:hover {
+            background: #c8e4f8;
+            color: #000;
+            border: none;
+        }
+		
+		.node.root {
+			width: 75px; /* Width of the circle */
+			height: 75px; /* Height of the circle */
+			border-radius: 50%; /* Makes the root node circular */
+			background-color: gold; /* Optional: distinguish the root node with a different color */
+			font-size: 15px; /* Adjust font size to fit inside the circle */
+			font-weight: bold;
+			display: flex; /* Use flexbox to center text */
+			justify-content: center; /* Center text horizontally */
+			align-items: center; /* Center text vertically */
+			text-align: center; /* Ensure text is centered */
+		}
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="tree"></div>
+
+    <script>
+        const csvData =
+`1,,SIMEON,M
+2,1,NEPOZNAT,M
+11,1,JOVO,M
+12,1,MITRA,Z
+21,2,ILIJA,M
+22,2,DUJAK,M
+111,11,ĐURAĐ,M
+112,11,IGNJO,M
+113,11,VASO,M
+114,11,CVJETKO,M
+115,11,MILE,M
+116,11,JOKA,Z
+117,11,LEKSIJA,Z
+118,11,BOGDAN,M
+119,11,MUŠKO,M
+121,12,BOŽO,M
+122,12,JOVO,M
+123,12,ĐUĐA,Z
+211,21,VUKAŠIN,M
+212,21,STOJAN,M
+213,21,LJEPOSAVA,Z
+214,21,GOSPANA,Z
+215,21,JELA,Z
+216,21,JOVANKA,Z
+221,22,MILICA,Z
+`;
+
+        function csvToArray(csv) {
+            const lines = csv.trim().split("\n");
+            return lines.map(line => {
+                const [id, parentId, name, gender] = line.trim().split(",");
+                return { id: id.trim(), parentId: parentId.trim(), name: name.trim(), gender: gender.trim() };
+            });
+        }
+
+        function buildTree(data) {
+            let tree = {};
+            data.forEach(item => {
+                tree[item.id] = { ...item, children: [] };
+            });
+
+            Object.values(tree).forEach(item => {
+                if (item.parentId) {
+                    tree[item.parentId].children.push(item);
+                }
+            });
+
+            return tree;
+        }
+
+        function calculateWeights(tree) {
+            function getWeight(node) {
+                if (!node.children.length) return 1;
+                return node.children.reduce((sum, child) => sum + getWeight(child), 0);
+            }
+
+            Object.values(tree).forEach(node => {
+                node.weight = getWeight(node);
+            });
+        }
+
+        function getProportionalAngle(tree, node, startAngle = 0, totalAngle = Math.PI * 2) {
+            if (!node.children || node.children.length === 0) {
+                return startAngle + totalAngle / 2; // Leaf node, return the centered angle
+            }
+
+            const totalWeight = node.children.reduce((sum, n) => sum + n.weight, 0);
+            let currentAngle = startAngle;
+
+            for (let child of node.children) {
+                const childAngleSpan = (child.weight / totalWeight) * totalAngle;
+                const childStartAngle = currentAngle;
+
+                // Recursively set the angle for the child node
+                child.angle = getProportionalAngle(tree, child, childStartAngle, childAngleSpan);
+
+                currentAngle += childAngleSpan;
+            }
+
+            node.angle = (startAngle + currentAngle) / 2; // Set and return the centered angle for the parent
+            return node.angle;
+        }
+
+        function renderTree(tree) {
+			const container = document.getElementById('tree');
+			const centerX = container.offsetWidth / 2;
+			const centerY = container.offsetHeight / 2;
+
+			const maxDepth = Math.max(...Object.values(tree).map(node => getDepth(tree, node.id)));
+			const maxRadius = Math.min(centerX, centerY) * 1.5 - 100; // Reserve some space around the edges
+
+			const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+			container.appendChild(svg);
+
+			Object.values(tree).forEach(node => {
+				const depth = getDepth(tree, node.id);
+				const radius = (depth / maxDepth) * maxRadius * 1.1;
+				const angle = node.angle || 0;
+
+				const x = centerX + radius * Math.cos(angle);
+				const y = centerY + radius * Math.sin(angle);
+
+				const nodeDiv = document.createElement('div');
+				nodeDiv.className = `node ${node.id === '1' ? 'root' : ''}`; // Add 'root' class to the root node
+				nodeDiv.style.left = `${x - (node.id === '1' ? 25 : 50)}px`; // Adjust to center the node div
+				nodeDiv.style.top = `${y - (node.id === '1' ? 25 : 3.5)}px`; // Adjust to center the node div
+				nodeDiv.innerText = node.name;
+				nodeDiv.dataset.id = node.id;
+
+				// Set background color based on gender
+				if (node.gender === 'M') {
+					nodeDiv.style.backgroundColor = 'lightblue';
+				} else if (node.gender === 'Z') {
+					nodeDiv.style.backgroundColor = 'lightpink';
+				}
+
+				if (node.parentId) {
+					const parentNode = tree[node.parentId];
+					const parentX = centerX + (getDepth(tree, parentNode.id) / maxDepth) * maxRadius * Math.cos(parentNode.angle);
+					const parentY = centerY + (getDepth(tree, parentNode.id) / maxDepth) * maxRadius * Math.sin(parentNode.angle);
+
+					const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+					line.setAttribute("x1", parentX);
+					line.setAttribute("y1", parentY);
+					line.setAttribute("x2", x);
+					line.setAttribute("y2", y);
+					line.setAttribute("stroke", "#ccc");
+					line.setAttribute("stroke-width", "2");
+
+					// Add data attributes to store the start and end node ids
+					line.dataset.startNode = JSON.stringify({ id: parentNode.id });
+					line.dataset.endNode = JSON.stringify({ id: node.id });
+
+					svg.appendChild(line);
+				}
+
+				nodeDiv.addEventListener('mousedown', onMouseDown);
+				container.appendChild(nodeDiv);
+			});
+
+			updateAllRotations(tree);
+		}
+
+        function getDepth(tree, nodeId, depth = 0) {
+            const node = tree[nodeId];
+            if (!node.parentId) return depth; // if we have returned to the root, return calculated depth
+            return getDepth(tree, node.parentId, depth + 1);
+        }
+
+        function onMouseDown(event) {
+            const node = event.target;
+            const container = document.getElementById('tree');
+            const containerRect = container.getBoundingClientRect();
+            let offsetX = node.getBoundingClientRect().width;
+            let offsetY = node.getBoundingClientRect().height;
+
+            function onMouseMove(event) {
+                const newX = event.clientX - offsetX / 2;
+                const newY = event.clientY;
+                node.style.left = `${newX}px`;
+                node.style.top = `${newY}px`;
+
+                updateAllLines();
+                updateAllRotations();
+            }
+
+            function onMouseUp() {
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+            }
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        }
+
+        function updateLines(node) {
+            const nodeId = node.dataset.id;
+            const x = parseFloat(node.style.left) + node.offsetWidth / 2;
+            const y = parseFloat(node.style.top) + node.offsetHeight / 2;
+
+            // Update lines connected to this node
+            const lines = document.querySelectorAll(`line`);
+            lines.forEach(line => {
+                const startNodeData = JSON.parse(line.dataset.startNode);
+                const endNodeData = JSON.parse(line.dataset.endNode);
+
+                if (startNodeData.id === nodeId) {
+                    line.setAttribute("x1", x);
+                    line.setAttribute("y1", y);
+
+                    const endNode = document.querySelector(`.node[data-id='${endNodeData.id}']`);
+                    if (endNode) {
+                        const endX = parseFloat(endNode.style.left) + endNode.offsetWidth / 2;
+                        const endY = parseFloat(endNode.style.top) + endNode.offsetHeight / 2;
+                        line.setAttribute("x2", endX);
+                        line.setAttribute("y2", endY);
+                    }
+                } else if (endNodeData.id === nodeId) {
+                    line.setAttribute("x2", x);
+                    line.setAttribute("y2", y);
+
+                    const startNode = document.querySelector(`.node[data-id='${startNodeData.id}']`);
+                    if (startNode) {
+                        const startX = parseFloat(startNode.style.left) + startNode.offsetWidth / 2;
+                        const startY = parseFloat(startNode.style.top) + startNode.offsetHeight / 2;
+                        line.setAttribute("x1", startX);
+                        line.setAttribute("y1", startY);
+                    }
+                }
+            });
+        }
+
+        function updateRotation(node) {
+            const nodeId = node.dataset.id;
+            const rootNode = document.querySelector('.node[data-id="1"]'); // Assuming root node id is 1
+
+            const rootX = parseFloat(rootNode.style.left) + rootNode.offsetWidth / 2;
+            const rootY = parseFloat(rootNode.style.top) + rootNode.offsetHeight / 2;
+            const nodeX = parseFloat(node.style.left) + node.offsetWidth / 2;
+            const nodeY = parseFloat(node.style.top) + node.offsetHeight / 2;
+
+            const deltaX = rootX - nodeX;
+            const deltaY = rootY - nodeY;
+            let rotationAngle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+            if (90 < rotationAngle && rotationAngle < 180 || -180 < rotationAngle && rotationAngle < -90) {
+                // If the angle is between 90 and 270 degrees, rotate the text an additional 180 degrees
+                rotationAngle += 180;
+            }
+
+            node.style.transform = `rotate(${rotationAngle}deg)`;
+        }
+
+        function updateAllRotations() {
+            const nodes = document.querySelectorAll('.node');
+            nodes.forEach(node => {
+                if (node.dataset.id !== '1') {
+                    updateRotation(node);
+                }
+            });
+        }
+
+        function updateAllLines() {
+            const nodes = document.querySelectorAll('.node');
+            nodes.forEach(node => {
+                if (node.dataset.id !== '1') {
+                    updateLines(node);
+                }
+            });
+        }
+		
+		// Fetch the CSV data from the file and build the tree
+        const treeData = csvToArray(csvData);
+        const treeStructure = buildTree(treeData);
+        calculateWeights(treeStructure);
+        getProportionalAngle(treeStructure, treeStructure['1']); // Calculate angles starting from the root
+        renderTree(treeStructure);
+		
+        updateAllLines();
+        updateAllRotations();
+    </script>
+</body>
+</html>
