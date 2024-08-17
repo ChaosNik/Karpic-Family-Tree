@@ -33,6 +33,20 @@
 			overflow: visible;
 		}
 		
+		#toggleIdButton {
+			position: absolute;
+			top: 0;
+			left: 0;
+			padding: 20px 40px; /* Increased padding */
+			font-size: 32px; /* Increased font size */
+			background-color: #007bff;
+			color: white;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			z-index: 1000; /* Ensures it's on top of other elements */
+		}
+		
 		.node {
 			position: absolute;
 			transform-origin: center;
@@ -404,7 +418,7 @@
 		let firstScroll = true;
 		let lastTouchEnd = 0;
 		let initialPinchDistance = null;
-		let initialPinchScale = 1;
+		let initialPinchScale = 2;
 
 		wrapper.addEventListener('mousedown', (e) => {
 			e.preventDefault();
@@ -456,7 +470,7 @@
 			}
 			const prevScale = scale;
 			scale += e.deltaY * -0.001;
-			scale = Math.min(Math.max(0.6, scale), 2);
+			scale = Math.min(Math.max(0.2, scale), 2);
 
 			// Calculate the position of the mouse relative to the tree
 			const mouseX = e.clientX - wrapper.offsetLeft;
@@ -523,7 +537,7 @@
 			// Detect double-tap for zoom in/out
 			const now = new Date().getTime();
 			if (now - lastTouchEnd <= 300) {
-				scale = scale === 1 ? 1.5 : 1; // Toggle between 1x and 1.5x zoom
+				scale = scale === 0.8 ? 2 : 0.8; // Toggle between 0.8x and 2x zoom
 				tree.style.transform = `scale(${scale})`;
 				updateAllLines(); // Update line positions on zoom
 			}
