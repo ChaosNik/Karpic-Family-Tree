@@ -1,8 +1,473 @@
 <!DOCTYPE html>
-<html>
-    <head>
-    </head>
-    <body>
-	<img src="./Porodicno-stablo.png" align="middle" width="1000" height="1000">
-    </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family tree Karpić</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: white;
+            position: relative;
+            height: 100vh;
+            margin: 0;
+            overflow: visible;
+        }
+
+        #wrapper {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            overflow: visible;
+            cursor: grab;
+        }
+
+		#tree {
+			position: absolute;
+			left: -2000px;  /* Move 4444 pixels to the left */
+			top: 555px;     /* Move 555 pixels down */
+			transform-origin: top right;
+			transform: scale(1);
+			width: 100%;
+			height: 100%;
+			overflow: visible;
+		}
+		
+		.node {
+			position: absolute;
+			transform-origin: center;
+			text-align: center;
+			width: 150px;
+			height: 15px;
+			border: none;
+			padding: 2px 2px;
+			text-decoration: none;
+			letter-spacing: 2px;
+			color: black;
+			font-family: arial, verdana, tahoma;
+			font-size: 15px;
+			font-weight: bold;
+			display: flex;  /* Use flexbox */
+			justify-content: center;  /* Center horizontally */
+			align-items: center;  /* Center vertically */
+			border-radius: 1px;
+			background-color: white;
+			cursor: pointer;
+			transform: rotate(0deg);
+			user-select: none;  /* Prevent text selection */
+			-moz-user-select: none; /* Firefox */
+		}
+
+        .node.root {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: gold;
+            font-size: 30px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+			overflow: visible;
+        }
+    </style>
+</head>
+<body>
+    <div id="wrapper">
+        <div id="tree"></div>
+    </div>
+
+    <script>
+        // Function to fetch and parse CSV data from a URL
+        async function fetchCsvData(url) {
+            const response = await fetch(url);
+            const csvText = await response.text();
+            return csvToArray(csvText);
+        }
+
+        // Modified function to parse CSV and ignore the first row
+        function csvToArray(csv) {
+            const lines = csv.trim().split("\n");
+            lines.shift(); // Remove the first row (header)
+            return lines.map(line => {
+                const [id, parentId, name, gender] = line.trim().split(",");
+                return { id: id.trim(), parentId: parentId.trim(), name: name.trim(), gender: gender.trim() };
+            });
+        }
+
+        function buildTree(data) {
+			let tree = {};
+			
+			// Initialize tree nodes
+			data.forEach(item => {
+				tree[item.id] = { ...item, children: [] };
+			});
+
+			// Build tree and reorder children while generating the lists
+			Object.values(tree).forEach(item => {
+				if (item.parentId) {
+					tree[item.parentId].children.push(item);
+				}
+			});
+
+			// Calculate weights and reorder children
+			Object.values(tree).forEach(node => {
+				if (node.children.length > 0) {
+					// Calculate weights for all children
+					node.children.forEach(child => {
+						child.weight = calculateWeight(tree, child);
+					});
+
+					// Sort children by weight (ascending)
+					node.children.sort((a, b) => a.weight - b.weight);
+
+					// Split sorted children into two halves
+					const halfLength = Math.ceil(node.children.length / 2);
+					const firstHalf = node.children.slice(0, halfLength); // Lower weights
+					const secondHalf = node.children.slice(halfLength);  // Higher weights
+
+					// Reorder by alternatively taking items from the two lists
+					let reorderedChildren = [];
+					let i = 0, j = 0;
+					while (i < firstHalf.length || j < secondHalf.length) {
+						if (j < secondHalf.length) {
+							reorderedChildren.push(secondHalf[j++]);
+						}
+						if (i < firstHalf.length) {
+							reorderedChildren.push(firstHalf[i++]);
+						}
+					}
+
+					node.children = reorderedChildren;
+				}
+			});
+
+			return tree;
+		}	
+		function calculateWeight(tree, node) {
+			if (!node.children || node.children.length === 0) return 1;
+			return node.children.reduce((sum, child) => sum + calculateWeight(tree, child), 0);
+		}
+
+        function calculateWeights(tree) {
+            function getWeight(node) {
+                if (!node.children.length) return 1;
+                return node.children.reduce((sum, child) => sum + getWeight(child), 0);
+            }
+
+            Object.values(tree).forEach(node => {
+                node.weight = getWeight(node);
+            });
+        }
+
+        function getProportionalAngle(tree, node, startAngle = 0, totalAngle = Math.PI * 2, minSpacing = 0.05) {
+			if (!node.children || node.children.length === 0) {
+				return startAngle + totalAngle / 2; // Leaf node, return the centered angle
+			}
+
+			// Calculate the total weight of all children
+			const totalWeight = node.children.reduce((sum, n) => sum + n.weight, 0);
+			
+			// Calculate the total available angle by subtracting the minimal spacing
+			const adjustedTotalAngle = totalAngle - (node.children.length - 1) * minSpacing;
+			let currentAngle = startAngle;
+
+			for (let child of node.children) {
+				// Calculate the angular span for each child based on the adjusted total angle
+				const childAngleSpan = (child.weight / totalWeight) * adjustedTotalAngle;
+
+				// Recursively set the angle for the child node
+				child.angle = getProportionalAngle(tree, child, currentAngle, childAngleSpan, minSpacing);
+
+				// Move the current angle forward by the span plus the minimal spacing
+				currentAngle += childAngleSpan + minSpacing;
+			}
+
+			node.angle = (startAngle + currentAngle - minSpacing) / 2; // Set and return the centered angle for the parent
+			return node.angle;
+		}
+
+        function renderTree(tree) {
+            const container = document.getElementById('tree');
+            const centerX = container.offsetWidth / 2;
+            const centerY = container.offsetHeight / 2;
+
+            const maxDepth = Math.max(...Object.values(tree).map(node => getDepth(tree, node.id)));
+            const maxRadius = Math.min(centerX, centerY) * 1.5 - 100;
+
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            container.appendChild(svg);
+
+            Object.values(tree).forEach(node => {
+                const depth = getDepth(tree, node.id);
+                let radius = (depth / maxDepth) * maxRadius * 1;
+                if (maxDepth === depth) radius = radius * 1.1;
+                const angle = node.angle || 0;
+
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = `node ${node.id === '1' ? 'root' : ''}`;
+
+                if (node.id === '1') {
+                    nodeDiv.style.left = `${centerX - 75}px`;
+                    nodeDiv.style.top = `${centerY - 75}px`;
+                } else {
+                    nodeDiv.style.left = `${x - 75}px`;
+                    nodeDiv.style.top = `${y - 7}px`;
+                }
+
+                nodeDiv.innerText = node.name;
+                nodeDiv.dataset.id = node.id;
+
+                if (node.gender === 'M') {
+                    nodeDiv.style.backgroundColor = 'lightblue';
+                } else if (node.gender === 'Z') {
+                    nodeDiv.style.backgroundColor = 'lightpink';
+                }
+
+                if (node.parentId) {
+                    const parentNode = tree[node.parentId];
+                    const parentX = centerX + (getDepth(tree, parentNode.id) / maxDepth) * maxRadius * Math.cos(parentNode.angle);
+                    const parentY = centerY + (getDepth(tree, parentNode.id) / maxDepth) * maxRadius * Math.sin(parentNode.angle);
+
+                    // Calculate connection points for lines from the sides of the rectangles
+                    const start = calculateConnectionPoint(nodeDiv, x, y, parentX, parentY);
+                    const end = calculateConnectionPoint(parentNode, parentX, parentY, x, y);
+
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", start.x);
+                    line.setAttribute("y1", start.y);
+                    line.setAttribute("x2", end.x);
+                    line.setAttribute("y2", end.y);
+                    line.setAttribute("stroke", "lightgray");
+                    line.setAttribute("stroke-width", "2");
+
+                    line.dataset.startNode = JSON.stringify({ id: parentNode.id });
+                    line.dataset.endNode = JSON.stringify({ id: node.id });
+
+                    svg.appendChild(line);
+                }
+
+                container.appendChild(nodeDiv);
+            });
+
+            updateAllRotations(tree);
+        }
+
+        // Function to calculate the connection points on the sides of the rectangles
+        function calculateConnectionPoint(node, x, y, parentX, parentY) {
+            const width = node.offsetWidth;
+            const height = node.offsetHeight;
+
+            let startX = x;
+            let startY = y;
+
+            // Determine which side of the rectangle the line should connect to
+            const deltaX = parentX - x;
+            const deltaY = parentY - y;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Horizontal connection (left or right)
+                if (deltaX < 0) {
+                    startX = x - width / 2; // Left side
+                } else {
+                    startX = x + width / 2; // Right side
+                }
+            } else {
+                // Vertical connection (top or bottom)
+                if (deltaY < 0) {
+                    startY = y - height / 2; // Top side
+                } else {
+                    startY = y + height / 2; // Bottom side
+                }
+            }
+
+            return { x: startX, y: startY };
+        }
+
+        function getDepth(tree, nodeId, depth = 0) {
+            const node = tree[nodeId];
+            if (!node.parentId) return depth;
+            return getDepth(tree, node.parentId, depth + 1);
+        }
+
+        function updateLines(node) {
+            const nodeId = node.dataset.id;
+            const x = parseFloat(node.style.left) + node.offsetWidth / 2;
+            const y = parseFloat(node.style.top) + node.offsetHeight / 2;
+
+            const lines = document.querySelectorAll(`line`);
+            lines.forEach(line => {
+                const startNodeData = JSON.parse(line.dataset.startNode);
+                const endNodeData = JSON.parse(line.dataset.endNode);
+
+                if (startNodeData.id === nodeId) {
+                    line.setAttribute("x1", x);
+                    line.setAttribute("y1", y);
+
+                    const endNode = document.querySelector(`.node[data-id='${endNodeData.id}']`);
+                    if (endNode) {
+                        const endX = parseFloat(endNode.style.left) + endNode.offsetWidth / 2;
+                        const endY = parseFloat(endNode.style.top) + endNode.offsetHeight / 2;
+                        line.setAttribute("x2", endX);
+                        line.setAttribute("y2", endY);
+                    }
+                } else if (endNodeData.id === nodeId) {
+                    line.setAttribute("x2", x);
+                    line.setAttribute("y2", y);
+
+                    const startNode = document.querySelector(`.node[data-id='${startNodeData.id}']`);
+                    if (startNode) {
+                        const startX = parseFloat(startNode.style.left) + startNode.offsetWidth / 2;
+                        const startY = parseFloat(startNode.style.top) + startNode.offsetHeight / 2;
+                        line.setAttribute("x1", startX);
+                        line.setAttribute("y1", startY);
+                    }
+                }
+            });
+        }
+
+        function updateRotation(node) {
+            const nodeId = node.dataset.id;
+            const rootNode = document.querySelector('.node[data-id="1"]');
+
+            const rootX = parseFloat(rootNode.style.left) + rootNode.offsetWidth / 2;
+            const rootY = parseFloat(rootNode.style.top) + rootNode.offsetHeight / 2;
+            const nodeX = parseFloat(node.style.left) + node.offsetWidth / 2;
+            const nodeY = parseFloat(node.style.top) + node.offsetHeight / 2;
+
+            const deltaX = rootX - nodeX;
+            const deltaY = rootY - nodeY;
+            let rotationAngle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+            if (90 < rotationAngle && rotationAngle < 180 || -180 < rotationAngle && rotationAngle < -90) {
+                rotationAngle += 180;
+            }
+
+            node.style.transform = `rotate(${rotationAngle}deg)`;
+        }
+
+        function updateAllRotations() {
+            const nodes = document.querySelectorAll('.node');
+            nodes.forEach(node => {
+                if (node.dataset.id !== '1') {
+                    updateRotation(node);
+                }
+            });
+        }
+
+        function updateAllLines() {
+            const nodes = document.querySelectorAll('.node');
+            nodes.forEach(node => {
+                if (node.dataset.id !== '1') {
+                    updateLines(node);
+                }
+            });
+        }
+		
+		// Set the initial zoom
+		document.body.style.zoom="45%";
+		
+        // Fetch the CSV data from the URL and build the tree
+        fetchCsvData('https://raw.githubusercontent.com/ChaosNik/Karpic-Family-Tree/main/FamilyTree.csv')
+            .then(treeData => {
+                const treeStructure = buildTree(treeData);
+                calculateWeights(treeStructure);
+                getProportionalAngle(treeStructure, treeStructure['1']);
+                renderTree(treeStructure);
+                updateAllLines();
+                updateAllRotations();
+            });
+
+        const wrapper = document.getElementById('wrapper');
+		const tree = document.getElementById('tree');
+		let isPanning = false;
+		let startX = 0;
+		let startY = 0;
+		let scale = 1;
+		let offsetX = 0;
+		let offsetY = 0;
+		let firstScroll = true;
+
+		wrapper.addEventListener('mousedown', (e) => {
+			e.preventDefault();
+			isPanning = true;
+			startX = e.clientX - tree.offsetLeft;
+			startY = e.clientY - tree.offsetTop;
+			wrapper.style.cursor = 'grabbing';
+		});
+
+		wrapper.addEventListener('mousemove', (e) => {
+			if (!isPanning) return;
+			e.preventDefault();
+			const x = e.clientX - startX;
+			const y = e.clientY - startY;
+			offsetX = x;
+			offsetY = y;
+			tree.style.left = `${x}px`;
+			tree.style.top = `${y}px`;
+		});
+
+		wrapper.addEventListener('mouseup', (e) => {
+			e.preventDefault();
+			isPanning = false;
+			wrapper.style.cursor = 'grab';
+		});
+
+		wrapper.addEventListener('mouseleave', (e) => {
+			e.preventDefault();
+			isPanning = false;
+			wrapper.style.cursor = 'grab';
+		});
+		
+		wrapper.addEventListener('wheel', (e) => {
+			e.preventDefault();
+			if(firstScroll){
+				startX = e.clientX - tree.offsetLeft;
+				startY = e.clientY - tree.offsetTop;
+				
+				const x = e.clientX - startX;
+				const y = e.clientY - startY;
+				offsetX = x;
+				offsetY = y;
+				tree.style.left = `${x}px`;
+				tree.style.top = `${y}px`;
+				
+				wrapper.style.cursor = 'grab';
+				
+				firstScroll = false;
+			}
+			const prevScale = scale;
+			scale += e.deltaY * -0.001;
+			scale = Math.min(Math.max(0.6, scale), 2);
+
+			// Calculate the position of the mouse relative to the tree
+			const mouseX = e.clientX - wrapper.offsetLeft;
+			const mouseY = e.clientY - wrapper.offsetTop;
+
+			// Calculate the new offset to keep the mouse position consistent
+			offsetX = mouseX - (mouseX - offsetX) * (scale / prevScale);
+			offsetY = mouseY - (mouseY - offsetY) * (scale / prevScale);
+
+			tree.style.transformOrigin = `${mouseX}px ${mouseY}px`;
+			tree.style.transform = `scale(${scale})`;
+			tree.style.left = `${offsetX}px`;
+			tree.style.top = `${offsetY}px`;
+			
+			updateAllLines(); // Update line positions on zoom
+		});
+    </script>
+</body>
 </html>
