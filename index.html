@@ -83,6 +83,7 @@
     </style>
 </head>
 <body>
+	<button id="toggleIdButton">IME/ID</button>
     <div id="wrapper">
         <div id="tree"></div>
     </div>
@@ -219,6 +220,7 @@
 
                 const nodeDiv = document.createElement('div');
                 nodeDiv.className = `node ${node.id === '1' ? 'root' : ''}`;
+				nodeDiv.setAttribute('data-id', node.id);
 
                 if (node.id === '1') {
                     nodeDiv.style.left = `${centerX - 75}px`;
@@ -400,6 +402,9 @@
 		let offsetX = 0;
 		let offsetY = 0;
 		let firstScroll = true;
+		let lastTouchEnd = 0;
+		let initialPinchDistance = null;
+		let initialPinchScale = 1;
 
 		wrapper.addEventListener('mousedown', (e) => {
 			e.preventDefault();
@@ -468,6 +473,84 @@
 			
 			updateAllLines(); // Update line positions on zoom
 		});
+		
+		// Handle touch events for pinch zooming, touch panning, and double-tap zooming
+		wrapper.addEventListener('touchstart', (e) => {
+			if (e.touches.length === 2) {
+				// Pinch start
+				initialPinchDistance = Math.hypot(
+					e.touches[0].clientX - e.touches[1].clientX,
+					e.touches[0].clientY - e.touches[1].clientY
+				);
+				initialPinchScale = scale;
+			} else if (e.touches.length === 1) {
+				// Pan start
+				isPanning = true;
+				startX = e.touches[0].clientX - tree.offsetLeft;
+				startY = e.touches[0].clientY - tree.offsetTop;
+			}
+		});
+
+		wrapper.addEventListener('touchmove', (e) => {
+			e.preventDefault();
+			if (e.touches.length === 2 && initialPinchDistance) {
+				// Pinch move
+				const pinchDistance = Math.hypot(
+					e.touches[0].clientX - e.touches[1].clientX,
+					e.touches[0].clientY - e.touches[1].clientY
+				);
+				scale = Math.min(Math.max(0.6, initialPinchScale * (pinchDistance / initialPinchDistance)), 2);
+				tree.style.transform = `scale(${scale})`;
+				updateAllLines(); // Update line positions on zoom
+			} else if (e.touches.length === 1 && isPanning) {
+				// Pan move
+				const x = e.touches[0].clientX - startX;
+				const y = e.touches[0].clientY - startY;
+				offsetX = x;
+				offsetY = y;
+				tree.style.left = `${x}px`;
+				tree.style.top = `${y}px`;
+			}
+		});
+
+		wrapper.addEventListener('touchend', (e) => {
+			if (e.touches.length === 0) {
+				// Reset panning and pinch distance
+				isPanning = false;
+				initialPinchDistance = null;
+			}
+			
+			// Detect double-tap for zoom in/out
+			const now = new Date().getTime();
+			if (now - lastTouchEnd <= 300) {
+				scale = scale === 1 ? 1.5 : 1; // Toggle between 1x and 1.5x zoom
+				tree.style.transform = `scale(${scale})`;
+				updateAllLines(); // Update line positions on zoom
+			}
+			lastTouchEnd = now;
+		});
+		
+		document.getElementById('toggleIdButton').addEventListener('click', () => {
+			const nodes = document.querySelectorAll('.node');
+			nodes.forEach(node => {
+				const id = node.getAttribute('data-id');
+				const currentName = node.innerText;
+
+				if (!node.dataset.originalName) {
+					// Store the original name if it's not already stored
+					node.dataset.originalName = currentName;
+				}
+
+				if (currentName.startsWith(id)) {
+					// If the name starts with the ID, remove the ID prefix
+					node.innerText = node.dataset.originalName;
+				} else {
+					// Otherwise, add the ID prefix
+					node.innerText = `${id}`;
+				}
+			});
+		});
+
     </script>
 </body>
 </html>
