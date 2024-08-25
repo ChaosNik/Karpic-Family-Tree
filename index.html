@@ -528,7 +528,7 @@
 					e.touches[0].clientX - e.touches[1].clientX,
 					e.touches[0].clientY - e.touches[1].clientY
 				);
-				scale = Math.min(Math.max(0.2, initialPinchScale * (pinchDistance / initialPinchDistance)), 2);
+				scale = initialPinchScale * (pinchDistance / initialPinchDistance);
 				tree.style.transform = `scale(${scale})`;
 				updateAllLines(); 
 			} else if (e.touches.length === 1 && isPanning) {
@@ -539,22 +539,6 @@
 				tree.style.left = `${x}px`;
 				tree.style.top = `${y}px`;
 			}
-		});
-
-		wrapper.addEventListener('touchend', (e) => {
-			//if (e.touches.length === 0) {
-				isPanning = false;
-				initialPinchDistance = null;
-			//}
-			//
-			//const now = new Date().getTime();
-			//if (now - lastTouchEnd <= 300) {
-			//	// Optionally, remove this toggle behavior if you want to keep the last scale
-			//	scale = scale === 0.2 ? 2 : 0.2;
-			//	tree.style.transform = `scale(${scale})`;
-			//	updateAllLines(); 
-			//}
-			//lastTouchEnd = now;
 		});
 
         document.getElementById('toggleIdButton').addEventListener('click', () => {
