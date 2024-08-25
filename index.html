@@ -16,17 +16,15 @@
 
         #wrapper {
             position: absolute;
-            width: 200%;
-            height: 200%;
+            width: 100%;
+            height: 100%;
             overflow: visible;
             cursor: grab;
         }
 
         #tree {
             position: absolute;
-			left: -1639px; top: 362px;
             transform-origin: top left;
-            transform: scale(0.7);
             width: 100%;
             height: 100%;
             overflow: visible;
@@ -96,27 +94,21 @@
 
         /* Media query for smaller screens, like phones */
         @media (max-width: 600px) {
-			#wrapper {
-				position: absolute;
-				width: 200%;
-				height: 200%;
-				overflow: visible;
-				cursor: grab;
-			}
+            #wrapper {
+                width: 	100%;
+                height: 100%;
+                cursor: grab;
+            }
             #tree {
-                position: absolute;
-                left: -10%;
-                top: 40%;
-				transform: scale(0.375);
-                width: 150%;
-                height: 150%;
+                transform: scale(1);
+                width: 100%;
+                height: 100%;
             }
             #toggleIdButton {
-				position: absolute;
                 width: 60%;
                 height: 25%;
-				min-height: 100px; 
-                padding: 5px 5px 5px 5px;
+                min-height: 100px; 
+                padding: 5px 5px;
                 font-size: 32px;
             }
         }
@@ -161,25 +153,6 @@
                     node.children.forEach(child => {
                         child.weight = calculateWeight(tree, child);
                     });
-
-                    node.children.sort((a, b) => a.weight - b.weight);
-
-                    const halfLength = Math.ceil(node.children.length / 2);
-                    const firstHalf = node.children.slice(0, halfLength); 
-                    const secondHalf = node.children.slice(halfLength);  
-
-                    let reorderedChildren = [];
-                    let i = 0, j = 0;
-                    while (i < firstHalf.length || j < secondHalf.length) {
-                        if (j < secondHalf.length) {
-                            reorderedChildren.push(secondHalf[j++]);
-                        }
-                        if (i < firstHalf.length) {
-                            reorderedChildren.push(firstHalf[i++]);
-                        }
-                    }
-
-                    node.children = reorderedChildren;
                 }
             });
 
@@ -202,7 +175,7 @@
             });
         }
 
-        function getProportionalAngle(tree, node, startAngle = 0, totalAngle = Math.PI * 2, minSpacing = 0.05) {
+        function getProportionalAngle(tree, node, startAngle = 0, totalAngle = Math.PI * 2, minSpacing = 0.00) {
             if (!node.children || node.children.length === 0) {
                 return startAngle + totalAngle / 2;
             }
@@ -227,30 +200,58 @@
             const centerY = container.offsetHeight / 2;
 
             const maxDepth = Math.max(...Object.values(tree).map(node => getDepth(tree, node.id)));
-            const maxRadius = Math.min(centerX, centerY) * 1.5 - 100;
+
+            // Set initial radii
+            const initialRadius = 250; // Ensure this is large enough to prevent overlap with the root circle
+            const radiusIncrementFactor = 1.4; // Increase factor for each subsequent level
+            let radii = [initialRadius]; // Array to store radius for each level
+            radii.push(radii[0] + radii[0] * 0.7);
+            radii.push(radii[1] + radii[0] * 1.5);
+            // Calculate radii for each depth level
+            for (let i = 3; i <= maxDepth; i++) {
+                const previousRadius = radii[i - 1];
+                radii.push(previousRadius + radii[0] * 1);
+            }
 
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             container.appendChild(svg);
 
             Object.values(tree).forEach(node => {
                 const depth = getDepth(tree, node.id);
-                let radius = (depth / maxDepth) * maxRadius * 1;
-                if (maxDepth === depth) radius = radius * 1.1;
+                let radius = radii[depth]; // Use pre-calculated radius for this depth level
                 const angle = node.angle || 0;
 
                 const x = centerX + radius * Math.cos(angle);
                 const y = centerY + radius * Math.sin(angle);
 
+                // Determine scaling factor based on depth
+                let scale;
+                if (depth === 0)
+                    scale = 2.0; // Root node (double the base size)
+                else if (depth === 1)
+                    scale = 1.75; // First level nodes
+                else
+                    scale = 1;
+
                 const nodeDiv = document.createElement('div');
                 nodeDiv.className = `node ${node.id === '1' ? 'root' : ''}`;
                 nodeDiv.setAttribute('data-id', node.id);
 
+                // Apply scale to the size
+                nodeDiv.style.width = `${150 * scale}px`;
+                nodeDiv.style.height = `${15 * scale}px`;
+                nodeDiv.style.fontSize = `${15 * scale}px`;
+
+                // If the node is the root, make it circular and center it
                 if (node.id === '1') {
-                    nodeDiv.style.left = `${centerX - 75}px`;
-                    nodeDiv.style.top = `${centerY - 75}px`;
+                    nodeDiv.style.width = `${150 * scale}px`;
+                    nodeDiv.style.height = `${150 * scale}px`;
+                    nodeDiv.style.borderRadius = '50%';
+                    nodeDiv.style.left = `${centerX - (75 * scale)}px`;
+                    nodeDiv.style.top = `${centerY - (75 * scale)}px`;
                 } else {
-                    nodeDiv.style.left = `${x - 75}px`;
-                    nodeDiv.style.top = `${y - 7}px`;
+                    nodeDiv.style.left = `${x - (75 * scale)}px`;
+                    nodeDiv.style.top = `${y - (7 * scale)}px`;
                 }
 
                 nodeDiv.innerText = node.name;
@@ -263,8 +264,8 @@
 
                 if (node.parentId) {
                     const parentNode = tree[node.parentId];
-                    const parentX = centerX + (getDepth(tree, parentNode.id) / maxDepth) * maxRadius * Math.cos(parentNode.angle);
-                    const parentY = centerY + (getDepth(tree, parentNode.id) / maxDepth) * maxRadius * Math.sin(parentNode.angle);
+                    const parentX = centerX + radii[getDepth(tree, parentNode.id)] * Math.cos(parentNode.angle);
+                    const parentY = centerY + radii[getDepth(tree, parentNode.id)] * Math.sin(parentNode.angle);
 
                     const start = calculateConnectionPoint(nodeDiv, x, y, parentX, parentY);
                     const end = calculateConnectionPoint(parentNode, parentX, parentY, x, y);
@@ -396,6 +397,41 @@
             });
         }
 
+        function setInitialTreeSize() {
+			const tree = document.getElementById('tree');
+			const viewportWidth = window.innerWidth;
+			const viewportHeight = window.innerHeight;
+
+			// Set your target dimensions for the tree
+			const targetWidth = 1500;
+			const targetHeight = 900;
+
+			// Calculate scale factor to fit tree within viewport
+			const widthRatio = viewportWidth / targetWidth;
+			const heightRatio = viewportHeight / targetHeight;
+
+			// Use the smaller ratio to ensure it fits within both dimensions
+			const scale = Math.min(widthRatio, heightRatio);
+
+			// Apply the scale to the tree
+			tree.style.transform = `scale(${scale})`;
+
+			// Calculate the offset to center the tree
+			const scaledWidth = targetWidth * scale;
+			const scaledHeight = targetHeight * scale;
+			const offsetX = (viewportWidth - scaledWidth) / 2;
+			const offsetY = (viewportHeight - scaledHeight) / 2;
+
+			// Position the tree in the center of the viewport
+			tree.style.left = `${offsetX}px`;
+			tree.style.top = `${offsetY}px`;
+
+			// Update the positions of all the lines
+			updateAllLines();
+		}
+
+        window.addEventListener('resize', setInitialTreeSize);
+
         document.body.style.zoom="45%";
 
         fetchCsvData('https://raw.githubusercontent.com/ChaosNik/Karpic-Family-Tree/main/FamilyTree.csv')
@@ -404,19 +440,16 @@
                 calculateWeights(treeStructure);
                 getProportionalAngle(treeStructure, treeStructure['1']);
                 renderTree(treeStructure);
-                updateAllLines();
-                updateAllRotations();
+                setInitialTreeSize();
             });
 
         const wrapper = document.getElementById('wrapper');
-        const tree = document.getElementById('tree');
         let isPanning = false;
         let startX = 0;
         let startY = 0;
         let scale = 1;
         let offsetX = 0;
         let offsetY = 0;
-        let firstScroll = true;
         let lastTouchEnd = 0;
         let initialPinchDistance = null;
         let initialPinchScale = 2;
@@ -430,8 +463,8 @@
         });
 
         wrapper.addEventListener('mousemove', (e) => {
+			e.preventDefault();
             if (!isPanning) return;
-            e.preventDefault();
             const x = e.clientX - startX;
             const y = e.clientY - startY;
             offsetX = x;
@@ -453,30 +486,24 @@
         });
 
         wrapper.addEventListener('wheel', (e) => {
-			e.preventDefault();
+            e.preventDefault();
 
-			const prevScale = scale;
-			scale += e.deltaY * -0.001;
-			scale = Math.min(Math.max(0.2, scale), 2);
-			
-			const mouseX = e.clientX;// - wrapper.offsetLeft;
-			const mouseY = e.clientY;// - wrapper.offsetTop;
-			
-			if (firstScroll) {
-				offsetX = wrapper.offsetLeft - 2800;
-				offsetY = wrapper.offsetTop;
-				firstScroll = false;
-			}
-			offsetX = mouseX - (mouseX - offsetX) * (scale / prevScale);
-			offsetY = mouseY - (mouseY - offsetY) * (scale / prevScale);
+            const prevScale = scale;
+            scale += e.deltaY * -0.001;
+            scale = Math.min(Math.max(0.2, scale), 2);
 
-			tree.style.transformOrigin = `${10}px ${10}px`;
-			tree.style.transform = `scale(${scale})`;
-			tree.style.left = `${offsetX}px`;
-			tree.style.top = `${offsetY}px`;
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
 
-			updateAllLines();
-		});
+            const rect = tree.getBoundingClientRect();
+            const offsetX = (mouseX - rect.left);
+            const offsetY = (mouseY - rect.top);
+
+            tree.style.transformOrigin = `${offsetX}px ${offsetY}px`;
+            tree.style.transform = `scale(${scale}) translate(${offsetX}px, ${offsetY}px)`;
+
+            updateAllLines();
+        });
 
         wrapper.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
@@ -499,7 +526,7 @@
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
                 );
-                scale = Math.min(Math.max(0.6, initialPinchScale * (pinchDistance / initialPinchDistance)), 2);
+                scale = Math.min(Math.max(0.4, initialPinchScale * (pinchDistance / initialPinchDistance)), 2);
                 tree.style.transform = `scale(${scale})`;
                 updateAllLines(); 
             } else if (e.touches.length === 1 && isPanning) {
@@ -520,7 +547,7 @@
 
             const now = new Date().getTime();
             if (now - lastTouchEnd <= 300) {
-                scale = scale === 0.8 ? 2 : 0.8;
+                scale = scale === 0.4 ? 2 : 0.4;
                 tree.style.transform = `scale(${scale})`;
                 updateAllLines(); 
             }
