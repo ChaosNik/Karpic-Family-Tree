@@ -31,18 +31,19 @@
         }
 
         #toggleIdButton {
-            position: absolute;
-            top: 20px; /* Position at the bottom */
-            left: 100px; /* Position at the bottom */
-            padding: 40px 80px; /* Increased padding for a larger button */
-            font-size: 48px; /* Larger font size */
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            z-index: 1000;
-        }
+			position: fixed; /* Fixed position ensures it stays in place even when scrolling */
+			top: 20px;
+			left: 200px; /* Center the button horizontally */
+			transform: translateX(-50%); /* Adjust position to account for the width of the button */
+			padding: 40px 80px; /* Increased padding for a larger button */
+			font-size: 48px; /* Larger font size */
+			background-color: #007bff;
+			color: white;
+			border: none;
+			border-radius: 10px;
+			cursor: pointer;
+			z-index: 1000; /* Ensure the button is on top of other elements */
+		}
 
         .node {
 			position: absolute;
