@@ -527,7 +527,7 @@
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
                 );
-                scale = Math.min(Math.max(0.4, initialPinchScale * (pinchDistance / initialPinchDistance)), 2);
+                scale = Math.min(Math.max(0.2, initialPinchScale * (pinchDistance / initialPinchDistance)), 2);
                 tree.style.transform = `scale(${scale})`;
                 updateAllLines(); 
             } else if (e.touches.length === 1 && isPanning) {
@@ -548,7 +548,7 @@
 
             const now = new Date().getTime();
             if (now - lastTouchEnd <= 300) {
-                scale = scale === 0.4 ? 2 : 0.4;
+                scale = scale === 0.2 ? 2 : 0.2;
                 tree.style.transform = `scale(${scale})`;
                 updateAllLines(); 
             }
