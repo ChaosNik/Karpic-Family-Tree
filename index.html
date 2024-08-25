@@ -45,29 +45,30 @@
         }
 
         .node {
-            position: absolute;
-            transform-origin: center;
-            text-align: center;
-            width: 150px;
-            height: 15px;
-            border: none;
-            padding: 2px 2px;
-            text-decoration: none;
-            letter-spacing: 2px;
-            color: black;
-            font-family: arial, verdana, tahoma;
-            font-size: 15px;
-            font-weight: bold;
-            display: flex;  /* Use flexbox */
-            justify-content: center;  /* Center horizontally */
-            align-items: center;  /* Center vertically */
-            border-radius: 1px;
-            background-color: white;
-            cursor: pointer;
-            transform: rotate(0deg);
-            user-select: none;  /* Prevent text selection */
-            -moz-user-select: none; /* Firefox */
-        }
+			position: absolute;
+			transform-origin: center;
+			text-align: center;
+			width: 150px;
+			height: 15px;
+			border: none; /* Remove the actual border */
+			padding: 2px 2px;
+			text-decoration: none;
+			letter-spacing: 2px;
+			color: black;
+			font-family: arial, verdana, tahoma;
+			font-size: 15px;
+			font-weight: bold;
+			display: flex;  /* Use flexbox */
+			justify-content: center;  /* Center horizontally */
+			align-items: center;  /* Center vertically */
+			border-radius: 1px;
+			background-color: white;
+			cursor: pointer;
+			transform: rotate(0deg);
+			user-select: none;  /* Prevent text selection */
+			-moz-user-select: none; /* Firefox */
+			box-shadow: 0 0 0 1.5px black; /* Simulate a thinner border using box-shadow */
+		}
 
         .node.root {
             width: 150px;
@@ -263,26 +264,26 @@
                 }
 
                 if (node.parentId) {
-                    const parentNode = tree[node.parentId];
-                    const parentX = centerX + radii[getDepth(tree, parentNode.id)] * Math.cos(parentNode.angle);
-                    const parentY = centerY + radii[getDepth(tree, parentNode.id)] * Math.sin(parentNode.angle);
+					const parentNode = tree[node.parentId];
+					const parentX = centerX + radii[getDepth(tree, parentNode.id)] * Math.cos(parentNode.angle);
+					const parentY = centerY + radii[getDepth(tree, parentNode.id)] * Math.sin(parentNode.angle);
 
-                    const start = calculateConnectionPoint(nodeDiv, x, y, parentX, parentY);
-                    const end = calculateConnectionPoint(parentNode, parentX, parentY, x, y);
+					const start = calculateConnectionPoint(nodeDiv, x, y, parentX, parentY);
+					const end = calculateConnectionPoint(parentNode, parentX, parentY, x, y);
 
-                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    line.setAttribute("x1", start.x);
-                    line.setAttribute("y1", start.y);
-                    line.setAttribute("x2", end.x);
-                    line.setAttribute("y2", end.y);
-                    line.setAttribute("stroke", "lightgray");
-                    line.setAttribute("stroke-width", "2");
+					const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+					line.setAttribute("x1", start.x);
+					line.setAttribute("y1", start.y);
+					line.setAttribute("x2", end.x);
+					line.setAttribute("y2", end.y);
+					line.setAttribute("stroke", "black"); // Set the stroke color to black
+					line.setAttribute("stroke-width", "1"); // Set the line thickness to 1px
 
-                    line.dataset.startNode = JSON.stringify({ id: parentNode.id });
-                    line.dataset.endNode = JSON.stringify({ id: node.id });
+					line.dataset.startNode = JSON.stringify({ id: parentNode.id });
+					line.dataset.endNode = JSON.stringify({ id: node.id });
 
-                    svg.appendChild(line);
-                }
+					svg.appendChild(line);
+				}
 
                 container.appendChild(nodeDiv);
             });
