@@ -423,6 +423,12 @@
 			// Update the positions of all the lines
 			updateAllLines();
 		}
+		
+		// Adjust transform origin and button position on zoom
+		function updateButtonPosition(scale, offsetX, offsetY) {
+			const button = document.getElementById('toggleIdButton');
+			button.style.transform = `translateX(${offsetX}px) translateY(${offsetY}px) scale(${scale})`;
+		}
 
         window.addEventListener('resize', setInitialTreeSize);
 
@@ -501,25 +507,31 @@
             }
         });
 
-        wrapper.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (e.touches.length === 2 && initialPinchDistance) {
-                const pinchDistance = Math.hypot(
-                    e.touches[0].clientX - e.touches[1].clientX,
-                    e.touches[0].clientY - e.touches[1].clientY
-                );
-                scale = MinitialPinchScale * (pinchDistance / initialPinchDistance);
-                tree.style.transform = `scale(${scale})`;
-                updateAllLines(); 
-            } else if (e.touches.length === 1 && isPanning) {
-                const x = e.touches[0].clientX - startX;
-                const y = e.touches[0].clientY - startY;
-                offsetX = x;
-                offsetY = y;
-                tree.style.left = `${x}px`;
-                tree.style.top = `${y}px`;
-            }
-        });
+        // Handle pinch zoom and panning
+		wrapper.addEventListener('touchmove', (e) => {
+			e.preventDefault();
+			if (e.touches.length === 2 && initialPinchDistance) {
+				const pinchDistance = Math.hypot(
+					e.touches[0].clientX - e.touches[1].clientX,
+					e.touches[0].clientY - e.touches[1].clientY
+				);
+				scale = initialPinchScale * (pinchDistance / initialPinchDistance);
+				tree.style.transform = `scale(${scale})`;
+				
+				// Adjust button position and scale
+				updateButtonPosition(scale, offsetX, offsetY);
+				updateAllLines();  // Recalculate lines
+			} else if (e.touches.length === 1 && isPanning) {
+				const x = e.touches[0].clientX - startX;
+				const y = e.touches[0].clientY - startY;
+				offsetX = x;
+				offsetY = y;
+				tree.style.left = `${x}px`;
+				tree.style.top = `${y}px`;
+
+				updateButtonPosition(scale, offsetX, offsetY); // Update button position
+			}
+		});
 
         wrapper.addEventListener('touchend', (e) => {
             if (e.touches.length === 0) {
