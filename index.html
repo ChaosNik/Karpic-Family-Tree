@@ -258,6 +258,9 @@
                 } else if (node.gender === 'Z') {
                     nodeDiv.style.backgroundColor = 'lightpink';
                 }
+				} else if (node.gender === 'n') {
+                    nodeDiv.style.backgroundColor = 'lightgray';
+                }
 
                 if (node.parentId) {
 					const parentNode = tree[node.parentId];
