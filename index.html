@@ -200,10 +200,9 @@
 
             // Set initial radii
             const initialRadius = 250; // Ensure this is large enough to prevent overlap with the root circle
-            const radiusIncrementFactor = 1.4; // Increase factor for each subsequent level
             let radii = [initialRadius]; // Array to store radius for each level
-            radii.push(radii[0] + radii[0] * 0.7);
-            radii.push(radii[1] + radii[0] * 1.5);
+            radii.push(radii[0] + radii[0] * 0.9);
+            radii.push(radii[1] + radii[0] * 1.8);
             // Calculate radii for each depth level
             for (let i = 3; i <= maxDepth; i++) {
                 const previousRadius = radii[i - 1];
@@ -257,9 +256,6 @@
                     nodeDiv.style.backgroundColor = 'lightblue';
                 } else if (node.gender === 'Z') {
                     nodeDiv.style.backgroundColor = 'lightpink';
-                }
-				} else if (node.gender === 'n') {
-                    nodeDiv.style.backgroundColor = 'lightgray';
                 }
 
                 if (node.parentId) {
