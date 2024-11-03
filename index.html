@@ -293,14 +293,13 @@
                 nodeDiv.appendChild(left);
                 nodeDiv.appendChild(right);
 
-                if (node.gender === 'M') {
+                if (node.gender === 'M')
                     nodeDiv.style.backgroundColor = 'lightblue';
-                } else if (node.gender === 'Z') {
+                else if (node.gender === 'Z')
                     nodeDiv.style.backgroundColor = 'lightpink';
-                }
-                else {
+                else 
                     nodeDiv.style.backgroundColor = 'lightgray';
-                }
+                
                 treeContainer.appendChild(nodeDiv);
                 rotateNodes(nodeDiv);
 
