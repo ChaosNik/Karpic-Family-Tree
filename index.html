@@ -23,7 +23,6 @@
             height: 100%;
             overflow: visible;
             cursor: grab;
-            z-index: 999;
             touch-action: none;
         }
 
@@ -36,6 +35,7 @@
             transform: scale(0.4);
             top: 50%;
             left: 50%;
+            z-index: 100;
         }
 
         #toggleIdButton {
@@ -95,12 +95,12 @@
 
         svg {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
             overflow: visible;
+        }
+
+        line {
+            stroke: silver;
+            stroke-width: 1
         }
     </style>
 </head>
@@ -108,6 +108,7 @@
     <button id="toggleIdButton">IME / ID</button>
     <div id="wrapper">
         <div id="tree"></div>
+        <svg xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
 
     <script>
@@ -197,9 +198,10 @@
         }
 
         function renderTree(tree) {
-            const container = document.getElementById('tree');
-            const centerX = container.offsetWidth / 2;
-            const centerY = container.offsetHeight / 2;
+            const treeContainer = document.getElementById('tree');
+            const wrapperContainer = document.getElementById('wrapper');
+            const centerX = treeContainer.offsetWidth / 2;
+            const centerY = treeContainer.offsetHeight / 2;
 
             const maxDepth = Math.max(...Object.values(tree).map(node => getDepth(tree, node.id)));
 
@@ -214,8 +216,8 @@
                 radii.push(previousRadius + radii[0] * 1);
             }
 
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            container.appendChild(svg);
+            let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            wrapperContainer.appendChild(svg);
 
             Object.values(tree).forEach(node => {
                 const depth = getDepth(tree, node.id);
@@ -235,7 +237,7 @@
                     scale = 1;
 
                 const nodeDiv = document.createElement('div');
-                nodeDiv.className = `node ${node.id === '1' ? 'root' : ''}`;
+                nodeDiv.className = `node`;
                 nodeDiv.setAttribute('data-id', node.id);
 
                 // Apply scale to the size
@@ -243,24 +245,53 @@
                 nodeDiv.style.height = `${15 * scale}px`;
                 nodeDiv.style.fontSize = `${15 * scale}px`;
 
-                // If the node is the root, make it circular and center it
-                if (node.id === '1') {
-                    nodeDiv.style.width = `${150 * scale}px`;
-                    nodeDiv.style.height = `${150 * scale}px`;
-                    nodeDiv.style.borderRadius = '50%';
-                    nodeDiv.style.left = `${centerX - (75 * scale)}px`;
-                    nodeDiv.style.top = `${centerY - (75 * scale)}px`;
-                } else {
-                    nodeDiv.style.left = `${x - (75 * scale)}px`;
-                    nodeDiv.style.top = `${y - (7 * scale)}px`;
-                }
+                nodeDiv.style.left = `${x - (75 * scale)}px`;
+                nodeDiv.style.top = `${y - (7 * scale)}px`;
 
                 // Move the text inside nodeDiv to the textWrapper span
                 const name = document.createElement("span");
                 name.classList.add("name");
                 name.innerHTML = node.name;
                 name.style.display = "inline-block";
+                name.style.position = 'absolute';
+
+                // Create left div
+                const left = document.createElement('div');
+                left.classList.add('left');
+                left.style.width = 0;
+                left.style.height = '100%';
+                left.style.position = 'absolute';
+                left.style.left = 0;
+                left.style.backgroundColor = 'red'; // Optional: for visualization
+
+                // Create right div
+                const right = document.createElement('div');
+                right.classList.add('right');
+                right.style.width = 0;
+                right.style.height = '100%';
+                right.style.position = 'absolute';
+                right.style.right = 0;
+                right.style.backgroundColor = 'blue'; // Optional: for visualization
+
+                // If the node is the root, make it circular and center it
+                if (node.id === '1') {
+                    nodeDiv.className = `node ${'root'}`;
+                    nodeDiv.style.width = `${150 * scale}px`;
+                    nodeDiv.style.height = `${150 * scale}px`;
+                    nodeDiv.style.borderRadius = '50%';
+                    nodeDiv.style.left = `${centerX - (75 * scale)}px`;
+                    nodeDiv.style.top = `${centerY - (75 * scale)}px`;
+
+                    left.style.position = 'relative';
+                    left.style.width = 0;
+
+                    right.style.position = 'relative';
+                    right.style.width = 0;
+                }
+                
                 nodeDiv.appendChild(name);
+                nodeDiv.appendChild(left);
+                nodeDiv.appendChild(right);
 
                 if (node.gender === 'M') {
                     nodeDiv.style.backgroundColor = 'lightblue';
@@ -270,44 +301,19 @@
                 else {
                     nodeDiv.style.backgroundColor = 'lightgray';
                 }
-                container.appendChild(nodeDiv);
+                treeContainer.appendChild(nodeDiv);
                 updateRotation(nodeDiv);
 
                 if (node.parentId) {
 					const parentNode = tree[node.parentId];
-					const parentX = centerX + radii[getDepth(tree, parentNode.id)] * Math.cos(parentNode.angle);
-					const parentY = centerY + radii[getDepth(tree, parentNode.id)] * Math.sin(parentNode.angle);
-
-					const start = calculateConnectionPoint(nodeDiv, x, y, parentX, parentY);
-					const end = calculateConnectionPoint(parentNode, parentX, parentY, x, y);
-
 					const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-					line.setAttribute("x1", start.x);
-					line.setAttribute("y1", start.y);
-					line.setAttribute("x2", end.x);
-					line.setAttribute("y2", end.y);
-					line.setAttribute("stroke", "black"); // Set the stroke color to black
-					line.setAttribute("stroke-width", "1"); // Set the line thickness to 1px
-
-					line.dataset.startNode = JSON.stringify({ id: parentNode.id });
-					line.dataset.endNode = JSON.stringify({ id: node.id });
+                    line.setAttribute("startId", parentNode.id);
+                    line.setAttribute("endId", node.id);
 
 					svg.appendChild(line);
 				}
             });
-        }
-
-        function calculateConnectionPoint(node, x, y, parentX, parentY) {
-            const width = node.offsetWidth;
-            const height = node.offsetHeight;
-
-            let startX = x;
-            let startY = y;
-
-            const deltaX = parentX - x;
-            const deltaY = parentY - y;
-
-            return { x: startX, y: startY };
+            updateAllLines();
         }
 
         function getDepth(tree, nodeId, depth = 0) {
@@ -316,39 +322,23 @@
             return getDepth(tree, node.parentId, depth + 1);
         }
 
-        function updateLines(node) {
-            const nodeId = node.dataset.id;
-            const x = parseFloat(node.style.left) + node.offsetWidth / 2;
-            const y = parseFloat(node.style.top) + node.offsetHeight / 2;
-
+        function updateAllLines() {
             const lines = document.querySelectorAll(`line`);
             lines.forEach(line => {
-                const startNodeData = JSON.parse(line.dataset.startNode);
-                const endNodeData = JSON.parse(line.dataset.endNode);
+                const start = document.querySelector(`.node[data-id='${line.getAttribute("startId")}']`);
+                const end = document.querySelector(`.node[data-id='${line.getAttribute("endId")}']`);
+                const leftBounds = start.querySelector(".left").getBoundingClientRect();
+                const rightBounds = end.querySelector(".right").getBoundingClientRect();
 
-                if (startNodeData.id === nodeId) {
-                    line.setAttribute("x1", x);
-                    line.setAttribute("y1", y);
+                const x1 = leftBounds.left + leftBounds.width / 2;
+                const y1 = leftBounds.top + leftBounds.height / 2;
+                const x2 = rightBounds.left + rightBounds.width / 2;
+                const y2 = rightBounds.top + rightBounds.height / 2;
 
-                    const endNode = document.querySelector(`.node[data-id='${endNodeData.id}']`);
-                    if (endNode) {
-                        const endX = parseFloat(endNode.style.left) + endNode.offsetWidth / 2;
-                        const endY = parseFloat(endNode.style.top) + endNode.offsetHeight / 2;
-                        line.setAttribute("x2", endX);
-                        line.setAttribute("y2", endY);
-                    }
-                } else if (endNodeData.id === nodeId) {
-                    line.setAttribute("x2", x);
-                    line.setAttribute("y2", y);
-
-                    const startNode = document.querySelector(`.node[data-id='${startNodeData.id}']`);
-                    if (startNode) {
-                        const startX = parseFloat(startNode.style.left) + startNode.offsetWidth / 2;
-                        const startY = parseFloat(startNode.style.top) + startNode.offsetHeight / 2;
-                        line.setAttribute("x1", startX);
-                        line.setAttribute("y1", startY);
-                    }
-                }
+                line.setAttribute("x1", x1);
+                line.setAttribute("y1", y1);
+                line.setAttribute("x2", x2);
+                line.setAttribute("y2", y2);
             });
         }
 
@@ -370,15 +360,6 @@
 
             node.style.transform = `rotate(${rotationAngle}deg)`;
         }
-
-        function updateAllLines() {
-            const nodes = document.querySelectorAll('.node');
-            nodes.forEach(node => {
-                if (node.dataset.id !== '1') {
-                    updateLines(node);
-                }
-            });
-        }
 		
 		// Adjust transform origin and button position on zoom
 		function updateButtonPosition(scale, offsetX, offsetY) {
@@ -392,7 +373,6 @@
                 calculateWeights(treeStructure);
                 getProportionalAngle(treeStructure, treeStructure['1']);
                 renderTree(treeStructure);
-                updateAllLines();
             });
 
         wrapper.addEventListener('mousedown', (e) => {
@@ -412,6 +392,7 @@
             offsetY = y;
             tree.style.left = `${x}px`;
             tree.style.top = `${y}px`;
+            updateAllLines();
         });
 
         wrapper.addEventListener('mouseup', (e) => {
