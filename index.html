@@ -467,9 +467,9 @@
             }
 
             const now = new Date().getTime();
-            if (now - lastTouchEnd <= 300) {
-                tree.style.transform = `scale(${scale})`;
-            }
+            // if (now - lastTouchEnd <= 300) {
+            //     tree.style.transform = `scale(${scale})`;
+            // }
             lastTouchEnd = now;
             updateAllLines(); 
         });
