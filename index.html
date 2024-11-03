@@ -451,7 +451,7 @@
 				);
 				scale = initialPinchScale * (pinchDistance / initialPinchDistance);
 				tree.style.transform = `scale(${scale})`;
-                updateButtonPosition(scale, offsetX, offsetY);
+                // updateButtonPosition(scale, offsetX, offsetY);
 			} else if (e.touches.length === 1 && isPanning) {
 				const x = e.touches[0].clientX - startX;
 				const y = e.touches[0].clientY - startY;
@@ -460,7 +460,7 @@
 				tree.style.left = `${x}px`;
 				tree.style.top = `${y}px`;
 
-				updateButtonPosition(scale, offsetX, offsetY); // Update button position
+				// updateButtonPosition(scale, offsetX, offsetY); // Update button position
 			}
             updateAllLines();
 		});
