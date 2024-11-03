@@ -446,10 +446,8 @@
 					e.touches[0].clientX - e.touches[1].clientX,
 					e.touches[0].clientY - e.touches[1].clientY
 				);
-                offsetX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-			    offsetY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
 				scale = initialPinchScale * (pinchDistance / initialPinchDistance);
-                tree.style.transformOrigin = `${offsetX}px ${offsetY}px`;
+                tree.style.transformOrigin = `${x}px ${y}px`;
 				tree.style.transform = `scale(${scale})`;
 			} else if (e.touches.length === 1 && isPanning) {
                 offsetX = x;
@@ -465,11 +463,6 @@
                 isPanning = false;
                 initialPinchDistance = null;
             }
-
-            const now = new Date().getTime();
-            // if (now - lastTouchEnd <= 300) {
-            //     tree.style.transform = `scale(${scale})`;
-            // }
             lastTouchEnd = now;
             updateAllLines(); 
         });
