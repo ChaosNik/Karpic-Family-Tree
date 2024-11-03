@@ -474,9 +474,9 @@
             const now = new Date().getTime();
             if (now - lastTouchEnd <= 300) {
                 tree.style.transform = `scale(${scale})`;
-                updateAllLines(); 
             }
             lastTouchEnd = now;
+            updateAllLines(); 
         });
 
         document.getElementById('toggleIdButton').addEventListener('click', () => {
