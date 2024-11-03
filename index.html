@@ -450,9 +450,6 @@
 				);
 				scale = initialPinchScale * (pinchDistance / initialPinchDistance);
 				tree.style.transform = `scale(${scale})`;
-				
-				// Adjust button position and scale
-				updateAllLines();  // Recalculate lines
                 updateButtonPosition(scale, offsetX, offsetY);
 			} else if (e.touches.length === 1 && isPanning) {
 				const x = e.touches[0].clientX - startX;
@@ -464,6 +461,7 @@
 
 				updateButtonPosition(scale, offsetX, offsetY); // Update button position
 			}
+            updateAllLines();
 		});
 
         wrapper.addEventListener('touchend', (e) => {
