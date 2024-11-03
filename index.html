@@ -302,7 +302,7 @@
                     nodeDiv.style.backgroundColor = 'lightgray';
                 }
                 treeContainer.appendChild(nodeDiv);
-                updateRotation(nodeDiv);
+                rotateNodes(nodeDiv);
 
                 if (node.parentId) {
 					const parentNode = tree[node.parentId];
@@ -342,7 +342,7 @@
             });
         }
 
-        function updateRotation(node) {
+        function rotateNodes(node) {
             const nodeId = node.dataset.id;
             const rootNode = document.querySelector('.node[data-id="1"]');
 
