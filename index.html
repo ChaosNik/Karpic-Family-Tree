@@ -9,19 +9,17 @@
             font-family: Arial, sans-serif;
             background-color: white;
             position: absolute;
-            height: 250vh;
-            width: 250vw;
+            height: 100vh;
+            width: 100vw;
             margin: 0;
             overflow: visible;
-            left: -70%;
-            top: -10%;
             touch-action: none;
         }
 
         #wrapper {
             position: absolute;
             background-color: white;
-            width: 150%;
+            width: 100%;
             height: 100%;
             overflow: visible;
             cursor: grab;
@@ -32,11 +30,12 @@
         #tree {
             position: absolute;
             transform-origin: center;
-            width: 100%;
-            height: 100%;
 			pointer-events: none;
             overflow: visible;
             touch-action: none;
+            transform: scale(0.4);
+            top: 50%;
+            left: 50%;
         }
 
         #toggleIdButton {
@@ -376,39 +375,6 @@
                 }
             });
         }
-
-        function setInitialTreeSize() {
-			const tree = document.getElementById('tree');
-			const viewportWidth = window.innerWidth;
-			const viewportHeight = window.innerHeight;
-
-			// Set your target dimensions for the tree
-			const targetWidth = 1500;
-			const targetHeight = 900;
-
-			// Calculate scale factor to fit tree within viewport
-			const widthRatio = viewportWidth / targetWidth;
-			const heightRatio = viewportHeight / targetHeight;
-
-			// Use the smaller ratio to ensure it fits within both dimensions
-			scale = Math.min(widthRatio, heightRatio) * 0.6;
-
-			// Apply the scale to the tree
-			tree.style.transform = `scale(${scale})`;
-
-			// Calculate the offset to center the tree
-			const scaledWidth = targetWidth * scale;
-			const scaledHeight = targetHeight * scale;
-			offsetX = (viewportWidth - scaledWidth) / 2;
-			offsetY = (viewportHeight - scaledHeight) / 2;
-			
-			// Position the tree in the center of the viewport
-			tree.style.left = `${offsetX}px`;
-			tree.style.top = `${offsetY}px`;
-
-			// Update the positions of all the lines
-			updateAllLines();
-		}
 		
 		// Adjust transform origin and button position on zoom
 		function updateButtonPosition(scale, offsetX, offsetY) {
@@ -416,17 +382,13 @@
 			button.style.transform = `translateX(${offsetX}px) translateY(${offsetY}px) scale(${scale})`;
 		}
 
-        window.addEventListener('resize', setInitialTreeSize);
-
-        document.body.style.zoom="45%";
-
         fetchCsvData('https://raw.githubusercontent.com/ChaosNik/Karpic-Family-Tree/main/FamilyTree.csv')
             .then(treeData => {
                 const treeStructure = buildTree(treeData);
                 calculateWeights(treeStructure);
                 getProportionalAngle(treeStructure, treeStructure['1']);
                 renderTree(treeStructure);
-                setInitialTreeSize();
+                updateAllLines();
             });
 
         wrapper.addEventListener('mousedown', (e) => {
