@@ -257,6 +257,11 @@
                 } else if (node.gender === 'Z') {
                     nodeDiv.style.backgroundColor = 'lightpink';
                 }
+                else {
+                    nodeDiv.style.backgroundColor = 'lightgray';
+                }
+                container.appendChild(nodeDiv);
+                updateRotation(nodeDiv);
 
                 if (node.parentId) {
 					const parentNode = tree[node.parentId];
@@ -279,11 +284,7 @@
 
 					svg.appendChild(line);
 				}
-
-                container.appendChild(nodeDiv);
             });
-
-            updateAllRotations(tree);
         }
 
         function calculateConnectionPoint(node, x, y, parentX, parentY) {
@@ -295,20 +296,6 @@
 
             const deltaX = parentX - x;
             const deltaY = parentY - y;
-
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                if (deltaX < 0) {
-                    startX = x - width / 2;
-                } else {
-                    startX = x + width / 2;
-                }
-            } else {
-                if (deltaY < 0) {
-                    startY = y - height / 2;
-                } else {
-                    startY = y + height / 2;
-                }
-            }
 
             return { x: startX, y: startY };
         }
@@ -373,15 +360,6 @@
             }
 
             node.style.transform = `rotate(${rotationAngle}deg)`;
-        }
-
-        function updateAllRotations() {
-            const nodes = document.querySelectorAll('.node');
-            nodes.forEach(node => {
-                if (node.dataset.id !== '1') {
-                    updateRotation(node);
-                }
-            });
         }
 
         function updateAllLines() {
