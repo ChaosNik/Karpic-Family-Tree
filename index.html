@@ -360,12 +360,6 @@
 
             node.style.transform = `rotate(${rotationAngle}deg)`;
         }
-		
-		// Adjust transform origin and button position on zoom
-		function updateButtonPosition(scale, offsetX, offsetY) {
-			const button = document.getElementById('toggleIdButton');
-			button.style.transform = `translateX(${offsetX}px) translateY(${offsetY}px) scale(${scale})`;
-		}
 
         fetchCsvData('https://raw.githubusercontent.com/ChaosNik/Karpic-Family-Tree/main/FamilyTree.csv')
             .then(treeData => {
@@ -451,7 +445,6 @@
 				);
 				scale = initialPinchScale * (pinchDistance / initialPinchDistance);
 				tree.style.transform = `scale(${scale})`;
-                // updateButtonPosition(scale, offsetX, offsetY);
 			} else if (e.touches.length === 1 && isPanning) {
 				const x = e.touches[0].clientX - startX;
 				const y = e.touches[0].clientY - startY;
@@ -459,8 +452,6 @@
 				offsetY = y;
 				tree.style.left = `${x}px`;
 				tree.style.top = `${y}px`;
-
-				// updateButtonPosition(scale, offsetX, offsetY); // Update button position
 			}
             updateAllLines();
 		});
@@ -483,17 +474,15 @@
             const nodes = document.querySelectorAll('.node');
             nodes.forEach(node => {
                 const id = node.getAttribute('data-id');
-                const currentName = node.innerText;
+                let currentName = node.querySelector('.name');
 
-                if (!node.dataset.originalName) {
-                    node.dataset.originalName = currentName;
-                }
+                if (!node.dataset.originalName)
+                    node.dataset.originalName = currentName.innerText;
 
-                if (currentName.startsWith(id)) {
-                    node.innerText = node.dataset.originalName;
-                } else {
-                    node.innerText = `${id}`;
-                }
+                if (currentName.innerText.startsWith(id))
+                    currentName.innerText = node.dataset.originalName;
+                else
+                    currentName.innerText = `${id}`;
             });
         });
     </script>
