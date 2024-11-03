@@ -114,12 +114,12 @@
 		let isPanning = false;
 		let startX = 0;
 		let startY = 0;
-		let scale = 1;
+		let scale = 0.4;
 		let offsetX = 0;
 		let offsetY = 0;
 		let lastTouchEnd = 0;
 		let initialPinchDistance = null;
-		let initialPinchScale = 1;
+		let initialPinchScale = scale;
 		
 		const wrapper = document.getElementById('wrapper');
 	
@@ -255,7 +255,12 @@
                     nodeDiv.style.top = `${y - (7 * scale)}px`;
                 }
 
-                nodeDiv.innerText = node.name;
+                // Move the text inside nodeDiv to the textWrapper span
+                const name = document.createElement("span");
+                name.classList.add("name");
+                name.innerHTML = node.name;
+                name.style.display = "inline-block";
+                nodeDiv.appendChild(name);
 
                 if (node.gender === 'M') {
                     nodeDiv.style.backgroundColor = 'lightblue';
@@ -360,9 +365,8 @@
             const deltaY = rootY - nodeY;
             let rotationAngle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
 
-            if (90 < rotationAngle && rotationAngle < 180 || -180 < rotationAngle && rotationAngle < -90) {
-                rotationAngle += 180;
-            }
+            if (90 < rotationAngle && rotationAngle < 180 || -180 < rotationAngle && rotationAngle < -90)
+                node.querySelector(".name").style.transform = `rotate(180deg)`;
 
             node.style.transform = `rotate(${rotationAngle}deg)`;
         }
