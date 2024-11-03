@@ -438,18 +438,19 @@
         // Handle pinch zoom and panning
 		wrapper.addEventListener('touchmove', (e) => {
 			e.preventDefault();
+            const x = e.touches[0].clientX - startX;
+			const y = e.touches[0].clientY - startY;
+            offsetX = x;
+			offsetY = y;
 			if (e.touches.length === 2 && initialPinchDistance) {
 				const pinchDistance = Math.hypot(
 					e.touches[0].clientX - e.touches[1].clientX,
 					e.touches[0].clientY - e.touches[1].clientY
 				);
 				scale = initialPinchScale * (pinchDistance / initialPinchDistance);
+                tree.style.transformOrigin = `${offsetX}px ${offsetY}px`;
 				tree.style.transform = `scale(${scale})`;
 			} else if (e.touches.length === 1 && isPanning) {
-				const x = e.touches[0].clientX - startX;
-				const y = e.touches[0].clientY - startY;
-				offsetX = x;
-				offsetY = y;
 				tree.style.left = `${x}px`;
 				tree.style.top = `${y}px`;
 			}
