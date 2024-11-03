@@ -505,8 +505,8 @@
 				tree.style.transform = `scale(${scale})`;
 				
 				// Adjust button position and scale
-				updateButtonPosition(scale, offsetX, offsetY);
 				updateAllLines();  // Recalculate lines
+                updateButtonPosition(scale, offsetX, offsetY);
 			} else if (e.touches.length === 1 && isPanning) {
 				const x = e.touches[0].clientX - startX;
 				const y = e.touches[0].clientY - startY;
