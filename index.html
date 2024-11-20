@@ -38,22 +38,6 @@
             z-index: 100;
         }
 
-        #toggleIdButton {
-			position: fixed; /* Fixed position ensures it stays in place even when scrolling */
-			top: 20px;
-			left: 200px; /* Center the button horizontally */
-			transform: translateX(-50%); /* Adjust position to account for the width of the button */
-			padding: 40px 80px; /* Increased padding for a larger button */
-			font-size: 24px; /* Larger font size */
-			background-color: #007bff;
-			color: white;
-			border: none;
-			border-radius: 10px;
-			cursor: pointer;
-			touch-action: none; 
-			z-index: 1000; /* Ensure the button is on top of other elements */
-		}
-
         .node {
 			position: absolute;
 			transform-origin: center;
@@ -105,7 +89,6 @@
     </style>
 </head>
 <body>
-    <button id="toggleIdButton">IME / ID</button>
     <div id="wrapper">
         <div id="tree"></div>
         <svg xmlns="http://www.w3.org/2000/svg"></svg>
@@ -469,22 +452,6 @@
             }
             lastTouchEnd = now;
             updateAllLines(); 
-        });
-
-        document.getElementById('toggleIdButton').addEventListener('click', () => {
-            const nodes = document.querySelectorAll('.node');
-            nodes.forEach(node => {
-                const id = node.getAttribute('data-id');
-                let currentName = node.querySelector('.name');
-
-                if (!node.dataset.originalName)
-                    node.dataset.originalName = currentName.innerText;
-
-                if (currentName.innerText.startsWith(id))
-                    currentName.innerText = node.dataset.originalName;
-                else
-                    currentName.innerText = `${id}`;
-            });
         });
     </script>
 </body>
