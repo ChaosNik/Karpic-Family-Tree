@@ -135,7 +135,12 @@
             lines.shift(); // Remove the first row (header)
             return lines.map(line => {
                 const [id, parentId, name, gender] = line.trim().split(",");
-                return { id: id.trim(), parentId: parentId.trim(), name: name.trim(), gender: gender.trim() };
+                return {
+					id: id.trim(),
+					parentId: parentId.trim(),
+					name: name.trim() || " ",
+					gender: gender.trim()
+				};
             });
         }
 
