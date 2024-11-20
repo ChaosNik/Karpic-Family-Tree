@@ -214,7 +214,7 @@
             const initialRadius = 250; // Ensure this is large enough to prevent overlap with the root circle
             let radii = [initialRadius]; // Array to store radius for each level
             radii.push(radii[0] + radii[0] * 0.9);
-            radii.push(radii[1] + radii[0] * 1.8);
+            radii.push(radii[1] + radii[0] * 2.6);
             // Calculate radii for each depth level
             for (let i = 3; i <= maxDepth; i++) {
                 const previousRadius = radii[i - 1];
